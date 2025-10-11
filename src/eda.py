@@ -15,9 +15,13 @@ import warnings
 warnings.filterwarnings('ignore')
 import logging
 import os
+
+
 log = logging.getLogger('Exploratory_Data_Analysis')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
-def load_data(filename: str = '../data/bank_transactions_data_2.csv'):
+
+
+def load_data(filename: str = 'data/bank_transactions_data_2.csv'):
     try:
         if os.path.exists(filename):
             df = pd.read_csv(filename)
@@ -28,6 +32,8 @@ def load_data(filename: str = '../data/bank_transactions_data_2.csv'):
     except FileNotFoundError as e:
         log.exception('File Not Found: ',e)
         return None
+    
+
 # ---Decriptive Summary of the dataset----
 def descriptive_overview(df: pd.DataFrame):
     if df is not None:
@@ -36,6 +42,8 @@ def descriptive_overview(df: pd.DataFrame):
         return df.describe(include='all').T
     else:
         log.warning('DataFrame is empty!')
+
+
 # ---Analysis of the numerical columns---
 def numeric_cols_summary(df: pd.DataFrame):
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -43,6 +51,8 @@ def numeric_cols_summary(df: pd.DataFrame):
     for i,col in enumerate(numeric_cols,1):
         log.info(f'{i} {col:<24} | Min : {df[col].min():<15} | Max : {df[col].max():<10}\n')
     return numeric_cols
+
+
 # ----Analysis of the categorical columns-----
 def category_cols_summary(df: pd.DataFrame):
     category_cols = df.select_dtypes(exclude=[np.number]).columns.tolist()
@@ -51,6 +61,8 @@ def category_cols_summary(df: pd.DataFrame):
         uniques = df[col].unique()
         log.info(f'{i:<2}. {col:<25} |Unique : {df[col].nunique():<7} | Examples : {uniques[:3]}\n')
     return category_cols
+
+
 # --------check for duplicates------
 def duplicate_data(df: pd.DataFrame):
     duplicates = df[df.duplicated()]
@@ -59,6 +71,8 @@ def duplicate_data(df: pd.DataFrame):
         log.info(f'No duplicates found in the data\n')
     else:
         return duplicates
+
+
 # -----check for missing values-----
 def missing_data(df: pd.DataFrame):
     missing_d = df.isnull().sum()
@@ -69,6 +83,8 @@ def missing_data(df: pd.DataFrame):
         'missing_pct' : missing_pct.round(2)
     })
     return missing_data_df
+
+
 # ---check for outliers----
 def check_outliers(df: pd.DataFrame, col: str):
     Q1 = df[col].quantile(0.25)
@@ -103,12 +119,14 @@ def run_eda(filename: str = '../data/bank_transactions_data_2.csv'):
 if __name__ == '__main__':
     results = run_eda()
     df = results['data']
+
+
 # ---univariate analysis------
 def advanced_visuals(df: pd.DataFrame, numeric_cols: list[str], category_cols: list[str]):
-    plt.figure(figsize=(17,30))
+    plt.figure(figsize=(17,17))
     # distribution plots for numeric cols
     for i, col in enumerate(numeric_cols,1):
-        plt.subplot(8, 4, i)
+        plt.subplot(4, 4, i)
         sns.histplot(data=df,x=col,kde=True,color='indigo',alpha=0.6)
         plt.title(f'Distribution of {col.title()}',fontsize=12, fontweight='bold')
         plt.ylabel('Frequency',fontsize=13)
@@ -116,27 +134,28 @@ def advanced_visuals(df: pd.DataFrame, numeric_cols: list[str], category_cols: l
 
     # boxplots
     for i, col in enumerate(numeric_cols,6):
-        plt.subplot(8, 4, i)
+        plt.subplot(4, 4, i)
         sns.boxplot(data=df, y=col, color='red')
         plt.title(f'Boxplot - {col}')
-        plt.grid(True, alpha=0.3)
+        plt.grid(True, alpha=0.4)
 
-    plt.subplot(8, 4, 11)
+    plt.subplot(4, 4, 11)
     corr = df.corr(numeric_only=True)
     sns.heatmap(data=corr, annot=True, fmt='.2f')
     plt.title('Correlation Heatmap')
 
-    # bar plots for categoricsl columns
-    # for  i, col in enumerate(category_cols,11):
-    #     plt.subplot(8, 4, i)
-    #     plot_df = pd.DataFrame({
-    #         'col' : col,
-    #         'value' : df[col].value_counts()
-    #     })
-    #     sns.barplot(data=plot_df, x='col', y='value', color='green')
-    #     plt.title(f'Barplot - {col}',fontsize=12, fontweight='bold')
-    #     plt.ylabel('Frequency',fontsize=12)
-    #     plt.grid(True, alpha=0.3)
+    for i,col in enumerate(['TransactionType','Channel','CustomerOccupation'],12):
+        plt.subplot(4, 4, i)
+        ax = sns.countplot(data=df, x=col, gap=0.5, width=0.4, color='green')
+        for container in ax.containers:
+            ax.bar_label(container,label_type='edge')
+        plt.title(f'Countplot - {col}', fontsize=12, fontweight='bold')
+        plt.ylabel('Frequency',fontsize=12)
 
     plt.tight_layout()
     plt.show()
+
+
+num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+cat_cols = df.select_dtypes(exclude=[np.number]).columns.tolist()
+advanced_visuals(df, num_cols, cat_cols)

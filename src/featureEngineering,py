@@ -69,6 +69,8 @@ def feature_encoding(df: pd.DataFrame):
     one_hot_features = ['Channel','CustomerOccupation','TransactionType']
     freq_features = ['Location','MerchantID']
     hash_features = ['AccountID','DeviceID','IP Address']
+
+    df.drop(columns=['TransactionID','TransactionDate','PreviousTransactionDate'])
     # define transformers 
     num_transformer = Pipeline(steps=[
         ('scaler', StandardScaler())
@@ -98,5 +100,5 @@ def feature_encoding(df: pd.DataFrame):
         ('onehot',onehot_transformer,one_hot_features),
         ('freq',freq_transformer, freq_features),
         ('hash',hash_transformer,hash_features)
-    ])
+    ],remainder='drop',verbose_feature_names_out=False)
     return preprocessor
