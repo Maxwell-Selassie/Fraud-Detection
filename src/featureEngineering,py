@@ -12,8 +12,10 @@ def feature_engineer(df: pd.DataFrame):
     df['amount_to_balance_ratio'] = (df['TransactionAmount'] / df['AccountBalance'] )
     df['avg_txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('mean')
     df['txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('count')
+
     user_stats = df.groupby('AccountID')['TransactionAmount'].agg(['mean','std']).reset_index()
     df = df.merge(user_stats, on='AccountID', how='left', suffixes=('','_user'))
+    
     df['amount_zscore'] = (df['TransactionAmount'] - df['mean']) / df['std']
     df['TransactionDate'] = pd.to_datetime(df['TransactionDate'])
     df['PreviousTransactionDate'] = pd.to_datetime(df['PreviousTransactionDate'])
