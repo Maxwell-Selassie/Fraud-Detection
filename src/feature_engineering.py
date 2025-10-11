@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-import warnings
-warnings.filterwarnings('ignore')
+# import warnings
+# warnings.filterwarnings('ignore')
 import logging
-import os
+import joblib
 from sklearn.preprocessing import StandardScaler, RobustScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -61,10 +59,12 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     df['TransactionAmount_log'] = np.log1p(df['TransactionAmount'])
 
     log.info(f"Feature engineering completed: {df.shape[1]} columns total.")
-    return df.sort_values(by='AccountID').reset_index(drop=True)
+    df.to_csv('data/processed_bank_transaction_data.csv',index=True)
+    return df
 
 def feature_encoding(df: pd.DataFrame):
     # define numeric features
+    log.info('Starting feature scaling and encoding...')
     numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()
     one_hot_features = ['Channel','CustomerOccupation','TransactionType']
     freq_features = ['Location','MerchantID']
@@ -101,4 +101,6 @@ def feature_encoding(df: pd.DataFrame):
         ('freq',freq_transformer, freq_features),
         ('hash',hash_transformer,hash_features)
     ],remainder='drop',verbose_feature_names_out=False)
+    joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
+    logging.info('Feature scaling and encoding completed')
     return preprocessor

@@ -39,7 +39,7 @@ def descriptive_overview(df: pd.DataFrame):
     if df is not None:
         log.info(f'Number of observations {df.shape[0]}')
         log.info(f'Number of features : {df.shape[1]}\n')
-        return df.describe(include='all').T
+        log.info(df.describe(include='all').T)
     else:
         log.warning('DataFrame is empty!')
 
@@ -60,7 +60,7 @@ def category_cols_summary(df: pd.DataFrame):
     for i,col in enumerate(category_cols,1):
         uniques = df[col].unique()
         log.info(f'{i:<2}. {col:<25} |Unique : {df[col].nunique():<7} | Examples : {uniques[:3]}\n')
-    return category_cols
+
 
 
 # --------check for duplicates------
@@ -70,7 +70,7 @@ def duplicate_data(df: pd.DataFrame):
     if len(duplicates) == 0:
         log.info(f'No duplicates found in the data\n')
     else:
-        return duplicates
+        log.info(duplicates)
 
 
 # -----check for missing values-----
@@ -82,7 +82,7 @@ def missing_data(df: pd.DataFrame):
         'missing_data' : missing_d,
         'missing_pct' : missing_pct.round(2)
     })
-    return missing_data_df
+    log.info(missing_data_df)
 
 
 # ---check for outliers----
@@ -98,32 +98,21 @@ def outlier_summary(df: pd.DataFrame, numeric_col: list[str]):
     for i, col in enumerate(numeric_col):
         outlier, lower, upper = check_outliers(df, col)
         log.info(f'{i}. {col:<20} | Number of outliers : {len(outlier):<4} | Range : ({lower} - {upper})')
+
 def run_eda(filename: str = '../data/bank_transactions_data_2.csv'):
     df = load_data()
-    overview = descriptive_overview(df)
+    descriptive_overview(df)
     num_cols = numeric_cols_summary(df)
-    cat_cols = category_cols_summary(df)
-    duplicates = duplicate_data(df)
-    missing_data_ = missing_data(df)
-    outliers = outlier_summary(df, num_cols)
-
-    return {
-        'data' : df,
-        'overview' : overview,
-        'num_cols' : num_cols,
-        'cat_cols' : cat_cols,
-        'duplicate' : duplicates,
-        'missing' : missing_data_,
-        'outlier' : outliers
-    }
-if __name__ == '__main__':
-    results = run_eda()
-    df = results['data']
+    category_cols_summary(df)
+    duplicate_data(df)
+    missing_data(df)
+    outlier_summary(df, num_cols)
+    return df
 
 
 # ---univariate analysis------
 def advanced_visuals(df: pd.DataFrame, numeric_cols: list[str], category_cols: list[str]):
-    plt.figure(figsize=(17,17))
+    plt.figure(figsize=(20,20))
     # distribution plots for numeric cols
     for i, col in enumerate(numeric_cols,1):
         plt.subplot(4, 4, i)
@@ -136,26 +125,22 @@ def advanced_visuals(df: pd.DataFrame, numeric_cols: list[str], category_cols: l
     for i, col in enumerate(numeric_cols,6):
         plt.subplot(4, 4, i)
         sns.boxplot(data=df, y=col, color='red')
-        plt.title(f'Boxplot - {col}')
+        plt.title(f'Boxplot - {col}',fontsize=13, fontweight='bold')
         plt.grid(True, alpha=0.4)
 
     plt.subplot(4, 4, 11)
     corr = df.corr(numeric_only=True)
     sns.heatmap(data=corr, annot=True, fmt='.2f')
-    plt.title('Correlation Heatmap')
+    plt.title('Correlation Heatmap',fontsize=12,fontweight='bold')
 
-    for i,col in enumerate(['TransactionType','Channel','CustomerOccupation'],12):
+    for i,col in enumerate(category_cols,12):
         plt.subplot(4, 4, i)
         ax = sns.countplot(data=df, x=col, gap=0.5, width=0.4, color='green')
         for container in ax.containers:
             ax.bar_label(container,label_type='edge')
         plt.title(f'Countplot - {col}', fontsize=12, fontweight='bold')
         plt.ylabel('Frequency',fontsize=12)
-
+    plt.savefig('plots/advanced_visuals',bbox_inches='tight',dpi=300)
     plt.tight_layout()
     plt.show()
 
-
-num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-cat_cols = df.select_dtypes(exclude=[np.number]).columns.tolist()
-advanced_visuals(df, num_cols, cat_cols)
