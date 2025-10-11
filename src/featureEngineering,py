@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore')
+import logging
+import os
+log = logging.getLogger('Exploratory_Data_Analysis')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
+def feature_engineer(df: pd.DataFrame):
+    df['amount_to_balance_ratio'] = (df['TransactionAmount'] / df['AccountBalance'] )
+    df['avg_txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('mean')
+    df['txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('count')
+    user_stats = df.groupby('AccountID')['TransactionAmount'].agg(['mean','std']).reset_index()
+    df = df.merge(user_stats, on='AccountID', how='left', suffixes=('','_user'))
+    df['amount_zscore'] = (df['TransactionAmount'] - df['mean']) / df['std']
+    df['TransactionDate'] = pd.to_datetime(df['TransactionDate'])
+    df['PreviousTransactionDate'] = pd.to_datetime(df['PreviousTransactionDate'])
+    df['diff_btwn_txn_times'] = abs(df['TransactionDate'] - df['PreviousTransactionDate']).dt.days
+    df['avg_time_btwn_txns'] = df.groupby('AccountID')['diff_btwn_txn_times'].transform('mean')
+    df['amount_to_user_avg'] = df['TransactionAmount'] / df['avg_txn_amount_account']
+    df['unique_merchant_user'] = df.groupby('AccountID')['MerchantID'].transform('nunique')
+    df['TransactionHour'] = df['TransactionDate'].dt.hour
+    df['TransactionDayOfTheWeek'] = df['TransactionDate'].dt.dayofweek
+    df['is_night'] = df['TransactionHour'].apply(lambda h: 1 if h < 6 or h > 22 else 0)
+    df['unique_devices_per_account'] = df.groupby('AccountID')['DeviceID'].transform('count')
+    df['unique_ips_per_account'] = df.groupby('AccountID')['IP Address'].transform('count')
+    df['unique_accounts_per_devices'] = df.groupby('DeviceID')['AccountID'].transform('count')
+    df['avg_loginAttempts'] = df.groupby('AccountID')['LoginAttempts'].transform('mean')
+    df['merchant_avg_amount'] = df.groupby('MerchantID')['TransactionAmount'].transform('mean')
+    df['merchant_amount_deviation'] = (df['TransactionAmount'] - df['merchant_avg_amount'])
+    df['loginAttemps_excess'] = df['LoginAttempts'] - df['avg_loginAttempts']
+    df['TransactionAmount'] = np.log1p(df['TransactionAmount'])
+    df.sort_values(by='AccountID')
