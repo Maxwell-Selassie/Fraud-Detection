@@ -1,7 +1,7 @@
-from eda import run_eda
-from eda import advanced_visuals
-from feature_engineering import feature_engineer
-from feature_engineering import feature_encoding
+from src.eda import run_eda
+from src.eda import advanced_visuals
+from src.feature_engineering import feature_engineer
+from src.feature_engineering import feature_encoding
 import logging
 import numpy as np
 import pandas
@@ -21,9 +21,9 @@ def main():
         raise
 
     # visualization
-    num_cols = raw_df.select_dtypes(include=[np.number]).columns.tolist()
-    cat_cols = ['TransactionType','Channel','CustomerOccupation']
-    visuals = advanced_visuals(raw_df, num_cols, cat_cols)
+    # num_cols = raw_df.select_dtypes(include=[np.number]).columns.tolist()
+    # cat_cols = ['TransactionType','Channel','CustomerOccupation']
+    # visuals = advanced_visuals(raw_df, num_cols, cat_cols)
 
     # engineered features
     featured_df = feature_engineer(raw_df)

@@ -68,7 +68,6 @@ def feature_encoding(df: pd.DataFrame):
     numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()
     one_hot_features = ['Channel','CustomerOccupation','TransactionType']
     freq_features = ['Location','MerchantID']
-    hash_features = ['AccountID','DeviceID','IP Address']
 
     df.drop(columns=['TransactionID','TransactionDate','PreviousTransactionDate'])
     # define transformers 
@@ -85,10 +84,6 @@ def feature_encoding(df: pd.DataFrame):
         ('encoder', OneHotEncoder(handle_unknown='ignore'))
     ])
 
-    hash_transformer = Pipeline(steps=[
-        ('encoder',HashingEncoder(n_components=16))
-    ])
-
     freq_transformer = Pipeline(steps=[
         ('encoder',CountEncoder())
     ])
@@ -98,8 +93,7 @@ def feature_encoding(df: pd.DataFrame):
         ('num',num_transformer, numeric_features),
         ('robust',robust_transformer,robust_features),
         ('onehot',onehot_transformer,one_hot_features),
-        ('freq',freq_transformer, freq_features),
-        ('hash',hash_transformer,hash_features)
+        ('freq',freq_transformer, freq_features)
     ],remainder='drop',verbose_feature_names_out=False)
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
     logging.info('Feature scaling and encoding completed')
