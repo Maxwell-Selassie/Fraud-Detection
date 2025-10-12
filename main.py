@@ -4,7 +4,7 @@ from src.feature_engineering import feature_engineer
 from src.feature_engineering import feature_encoding
 import logging
 import numpy as np
-import pandas
+import pandas as pd
 
 # setup logging
 log = logging.getLogger('FraudDetection')

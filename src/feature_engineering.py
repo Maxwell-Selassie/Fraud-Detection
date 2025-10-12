@@ -7,7 +7,8 @@ import joblib
 from sklearn.preprocessing import StandardScaler, RobustScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from category_encoders import CountEncoder, HashingEncoder
+from category_encoders import CountEncoder
+import json
 
 log = logging.getLogger('Exploratory_Data_Analysis')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
@@ -58,8 +59,16 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     # Log transform
     df['TransactionAmount_log'] = np.log1p(df['TransactionAmount'])
 
+    # drop columns
+    df.drop(columns=['TransactionID','TransactionDate','PreviousTransactionDate'],inplace=True)
+
     log.info(f"Feature engineering completed: {df.shape[1]} columns total.")
-    df.to_csv('data/processed_bank_transaction_data.csv',index=True)
+    df.to_csv('data/processed_bank_transaction_data.csv',index=False)
+    
+    with open('artifacts/feature_names.json','w') as file:
+        json.dump(df.columns.tolist(), file, indent=4)
+    log.info(f'Feature names successfully saved!')
+
     return df
 
 def feature_encoding(df: pd.DataFrame):
@@ -69,7 +78,6 @@ def feature_encoding(df: pd.DataFrame):
     one_hot_features = ['Channel','CustomerOccupation','TransactionType']
     freq_features = ['Location','MerchantID']
 
-    df.drop(columns=['TransactionID','TransactionDate','PreviousTransactionDate'])
     # define transformers 
     num_transformer = Pipeline(steps=[
         ('scaler', StandardScaler())
