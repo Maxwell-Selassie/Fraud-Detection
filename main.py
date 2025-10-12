@@ -21,9 +21,9 @@ def main():
         raise
 
     # visualization
-    # num_cols = raw_df.select_dtypes(include=[np.number]).columns.tolist()
-    # cat_cols = ['TransactionType','Channel','CustomerOccupation']
-    # visuals = advanced_visuals(raw_df, num_cols, cat_cols)
+    num_cols = raw_df.select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = ['TransactionType','Channel','CustomerOccupation']
+    visuals = advanced_visuals(raw_df, num_cols, cat_cols)
 
     # engineered features
     featured_df = feature_engineer(raw_df)
