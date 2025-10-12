@@ -98,11 +98,11 @@ def feature_encoding(df: pd.DataFrame):
 
     # combine into a column transformer
     preprocessor = ColumnTransformer(transformers=[
-        ('num',num_transformer, numeric_features),
+        ('numeric',num_transformer, numeric_features),
         ('robust',robust_transformer,robust_features),
         ('onehot',onehot_transformer,one_hot_features),
         ('freq',freq_transformer, freq_features)
-    ],remainder='drop',verbose_feature_names_out=False)
+    ],remainder='drop')
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
     logging.info('Feature scaling and encoding completed')
     return preprocessor

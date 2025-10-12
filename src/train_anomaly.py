@@ -99,4 +99,4 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
     print("Isolation Forest model saved successfully.")
 
-def pca()
+
