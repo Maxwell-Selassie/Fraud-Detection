@@ -65,8 +65,10 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     log.info(f"Feature engineering completed: {df.shape[1]} columns total.")
     df.to_csv('data/processed_bank_transaction_data.csv',index=False)
     
-    with open('artifacts/feature_names.json','w') as file:
-        json.dump(df.columns.tolist(), file, indent=4)
+    # with open('artifacts/feature_names.json','w') as file:
+    #     json.dump(df.columns, file, indent=4)
+    columns = df.columns.tolist()   
+    columns.to_csv('artifacts/feature_names.csv',index=False)
     log.info(f'Feature names successfully saved!')
 
     return df
