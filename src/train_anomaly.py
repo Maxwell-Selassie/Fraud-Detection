@@ -6,6 +6,12 @@ import numpy as np
 from category_encoders import HashingEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold
+from xgboost import XGBClassifier
+from sklearn.metrics import (
+    accuracy_score,precision_score,recall_score,f1_score,roc_auc_score,classification_report
+)
 
 log = logging.getLogger('ModelTraining')
 logging.basicConfig(level=logging.INFO,  format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
@@ -33,6 +39,24 @@ def load_preprocessor(filename: str = 'artifacts/preprocessor.joblib'):
     except FileNotFoundError:
         log.exception('Preprocessor not found! Check file path and try again')
         raise
+
+# transform df into a numpy array by fitting the preprocessor pipeline
+def fit_preprocessor_on_df(df: pd.DataFrame,preprocessor):
+    df = df.copy()
+
+    # Define features
+    hash_features = ['AccountID','DeviceID','IP Address']
+    hash_encode = HashingEncoder(cols=hash_features, n_components=16)
+    x_hashed = hash_encode.fit_transform(df)
+
+    x = preprocessor.fit_transform(x_hashed)
+    return x
+
+# target output - y
+def target_feature(df):
+    y = df['AnomalyFlag']
+    return y
+
 # ============================================
 # UNSUPERVISED ANOMALY DETECTION (ISOLATION FOREST)
 # ============================================
@@ -82,16 +106,8 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     # -------------------------
     print("Anomalies detected:", df['AnomalyFlag'].sum(), "out of", len(df))
 
-    # Distribution of scores
-    plt.figure(figsize=(8,5))
-    sns.histplot(df['AnomalyScore'], bins=50, kde=True, color='orange')
-    plt.title("Distribution of Anomaly Scores")
-    plt.xlabel("Anomaly Score")
-    plt.ylabel("Frequency")
-    plt.show()
-
     # Quick overview of anomaly transactions
-    log.info(df[df['AnomalyFlag'] == 1].head(10))
+    log.info('\n',df[df['AnomalyFlag'] == 1].head(10))
 
     # -------------------------
     # 6. Save model artifact
@@ -100,3 +116,82 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     print("Isolation Forest model saved successfully.")
 
 
+def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
+
+    y = df['AnomalyFlag']
+
+    x_train,x_test,y_train,y_test = train_test_split(
+        x,y, test_size=0.2, stratify=y
+    )
+    # cross validation
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=30)
+
+    # train random forest model
+    rf_params = {
+        'n_estimators': [100, 200],
+        'max_depth': [None, 10, 20],
+        'min_samples_split': [2, 5],
+        'min_samples_leaf': [1, 2],
+    }
+    rf = RandomForestClassifier(random_state=42,class_weight='balanced')
+    rf_grid = GridSearchCV(estimator=rf, param_grid=rf_params, cv=cv, n_jobs=-1, scoring='f1', verbose=1)
+    log.info('Training RandomForest...(This May Take A While)')
+    rf_grid.fit(x_train,y_train)
+
+    # best model for random forest
+    rf_best_ = rf_grid.best_estimator_
+    print('-' * 70)
+    # train xgboost model
+    xgb_params = {
+        'n_estimators': [100, 200],
+        'max_depth': [4, 6],
+        'learning_rate': [0.05, 0.1],
+        'subsample': [0.8, 1.0],
+        'colsample_bytree': [0.8, 1.0]
+    }
+    xgb = XGBClassifier(objective='binary:logistic',random_state=30,eval_metric='logloss')
+    xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, scoring='f1',verbose=1,n_jobs=-1)
+    log.info("Training XGBoost...(This May Take A While)")
+    xgb_grid.fit(x_train,y_train)
+
+    xgb_best_ = xgb_grid.best_estimator_
+
+    # evaluate both model and pick the best one
+    models = {'RandomForest' : rf_best_, 'Xgboost' : xgb_best_}
+    results = []
+
+    for name, model in models.items():
+        y_probs = model.predict_proba(x_test)[:,1]
+        threshold = 0.2
+        y_pred = (y_probs >= threshold).astype(int)
+        metrics = {
+            'Model' : name,
+            'Accuracy' : accuracy_score(y_test,y_pred),
+            'Precision' : precision_score(y_test,y_pred),
+            'Recall' : recall_score(y_test,y_pred),
+            'f1_score' : f1_score(y_test,y_pred),
+            'roc_auc_score' : roc_auc_score(y_test, y_pred)
+        }
+        results.append(metrics)
+        print('-'*70)
+        print(f'{name} Classification Report \n',classification_report(y_test,y_pred))
+    print('-'*70)
+    results_df = pd.DataFrame(results)
+    print('Model Comparison\n',results_df)
+
+    # save the best model
+    best_model_name = results_df.sort_values(by='f1_score',ascending=False).iloc[0]['Model']
+    best_model = models[best_model_name]
+    joblib.dump(best_model,f'models/{best_model_name}_fraud_detector.pkl')
+    print('-'*70)
+    log.info(f"Best model '{best_model_name}' saved as '{best_model_name}_fraud_detector.pkl")
+
+def model_training():
+    df = load_dataset()
+    preprocessor = load_preprocessor()
+    iso_forest = isolation_forest(df, preprocessor)
+    x = fit_preprocessor_on_df(df,preprocessor)
+    y = target_feature(df)
+    rf_xgb = rf_xgb_training(df, x, y)
+if __name__ == '__main__':
+    model_training()
