@@ -56,7 +56,7 @@ def transform_with_preprocessor(df: pd.DataFrame,preprocessor):
     hash_encode = HashingEncoder(cols=hash_features, n_components=16)
     x_hashed = hash_encode.fit_transform(df)
 
-    x = preprocessor.fit_transform(x_hashed)
+    x = preprocessor.transform(x_hashed)
     return x
 
 # target output - y
@@ -172,7 +172,7 @@ def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
             'Precision' : precision_score(y_test,y_pred),
             'Recall' : recall_score(y_test,y_pred),
             'f1_score' : f1_score(y_test,y_pred),
-            'roc_auc_score' : roc_auc_score(y_test, y_pred)
+            'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         results.append(metrics)
         print('-'*70)

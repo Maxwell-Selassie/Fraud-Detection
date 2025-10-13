@@ -105,6 +105,8 @@ def feature_encoding(df: pd.DataFrame):
         ('onehot',onehot_transformer,one_hot_features),
         ('freq',freq_transformer, freq_features)
     ],remainder='drop',verbose_feature_names_out=True)
+
+    preprocessor.fit(df)
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
     logging.info('Feature scaling and encoding completed')
     return preprocessor
