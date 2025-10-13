@@ -10,8 +10,10 @@ from sklearn.pipeline import Pipeline
 from category_encoders import CountEncoder
 import json
 
-log = logging.getLogger('Exploratory_Data_Analysis')
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
+log = logging.getLogger('FeatureEngineering')
+logging.basicConfig(filename='logs/inference.log',
+                    level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', 
+                    datefmt='%H:%M:%S')
 
 def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     log.info("Starting feature engineering...")

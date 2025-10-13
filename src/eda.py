@@ -3,7 +3,6 @@
 # each transaction such as amount, location, customerAge, Login Attempts, etc.
 
 # File : bank_transactions_data_2.csv
-# shape : 
 
 # Goal of this project is to build a machine learning model to detect fraudulent transactions by analyzing several 
 # underlying factors like transactions, demographics and user-behaviour.
@@ -16,9 +15,13 @@ warnings.filterwarnings('ignore')
 import logging
 import os
 
+os.makedirs('logs',exist_ok=True)
 
 log = logging.getLogger('Exploratory_Data_Analysis')
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(filename='logs/inference.log',
+                    level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s : %(message)s', 
+                    datefmt='%H:%M:%S')
 
 
 def load_data(filename: str = 'data/bank_transactions_data_2.csv'):
@@ -39,7 +42,7 @@ def descriptive_overview(df: pd.DataFrame):
     if df is not None:
         log.info(f'Number of observations {df.shape[0]}')
         log.info(f'Number of features : {df.shape[1]}\n')
-        log.info(df.describe(include='all').T)
+        log.info('\n',df.describe(include='all').T)
     else:
         log.warning('DataFrame is empty!')
 

@@ -1,0 +1,133 @@
+07:03:14 - INFO : Data has successfully been loaded
+07:03:14 - INFO : Number of observations 2512
+07:03:14 - INFO : Number of features : 16
+
+07:03:14 - INFO :                           count unique                  top  freq         mean          std     min      25%      50%       75%       max
+TransactionID              2512   2512             TX000001     1          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+AccountID                  2512    495              AC00460    12          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+TransactionAmount        2512.0    NaN                  NaN   NaN   297.593778   291.946243    0.26   81.885   211.14  414.5275   1919.11
+TransactionDate            2512   2512  2023-04-11 16:29:14     1          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+TransactionType            2512      2                Debit  1944          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+Location                   2512     43           Fort Worth    70          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+DeviceID                   2512    681              D000548     9          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+IP Address                 2512    592       200.136.146.93    13          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+MerchantID                 2512    100                 M026    45          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+Channel                    2512      3               Branch   868          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+CustomerAge              2512.0    NaN                  NaN   NaN    44.673965    17.792198    18.0     27.0     45.0      59.0      80.0
+CustomerOccupation         2512      4              Student   657          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+TransactionDuration      2512.0    NaN                  NaN   NaN   119.643312    69.963757    10.0     63.0    112.5     161.0     300.0
+LoginAttempts            2512.0    NaN                  NaN   NaN     1.124602     0.602662     1.0      1.0      1.0       1.0       5.0
+AccountBalance           2512.0    NaN                  NaN   NaN  5114.302966  3900.942499  101.25  1504.37  4735.51   7678.82  14977.99
+PreviousTransactionDate    2512    360  2024-11-04 08:09:17    16          NaN          NaN     NaN      NaN      NaN       NaN       NaN
+07:03:14 - INFO : | Number of numeric columns : 5 | Examples : ['TransactionAmount', 'CustomerAge', 'TransactionDuration']
+
+07:03:14 - INFO : 1 TransactionAmount        | Min : 0.26            | Max : 1919.11   
+
+07:03:14 - INFO : 2 CustomerAge              | Min : 18              | Max : 80        
+
+07:03:14 - INFO : 3 TransactionDuration      | Min : 10              | Max : 300       
+
+07:03:14 - INFO : 4 LoginAttempts            | Min : 1               | Max : 5         
+
+07:03:14 - INFO : 5 AccountBalance           | Min : 101.25          | Max : 14977.99  
+
+07:03:14 - INFO : | Number of categorical columns : 11 | Examples : ['TransactionID', 'AccountID', 'TransactionDate']
+
+07:03:14 - INFO : 1 . TransactionID             |Unique : 2512    | Examples : ['TX000001' 'TX000002' 'TX000003']
+
+07:03:14 - INFO : 2 . AccountID                 |Unique : 495     | Examples : ['AC00128' 'AC00455' 'AC00019']
+
+07:03:14 - INFO : 3 . TransactionDate           |Unique : 2512    | Examples : ['2023-04-11 16:29:14' '2023-06-27 16:44:19' '2023-07-10 18:16:08']
+
+07:03:14 - INFO : 4 . TransactionType           |Unique : 2       | Examples : ['Debit' 'Credit']
+
+07:03:14 - INFO : 5 . Location                  |Unique : 43      | Examples : ['San Diego' 'Houston' 'Mesa']
+
+07:03:14 - INFO : 6 . DeviceID                  |Unique : 681     | Examples : ['D000380' 'D000051' 'D000235']
+
+07:03:14 - INFO : 7 . IP Address                |Unique : 592     | Examples : ['162.198.218.92' '13.149.61.4' '215.97.143.157']
+
+07:03:14 - INFO : 8 . MerchantID                |Unique : 100     | Examples : ['M015' 'M052' 'M009']
+
+07:03:14 - INFO : 9 . Channel                   |Unique : 3       | Examples : ['ATM' 'Online' 'Branch']
+
+07:03:14 - INFO : 10. CustomerOccupation        |Unique : 4       | Examples : ['Doctor' 'Student' 'Retired']
+
+07:03:14 - INFO : 11. PreviousTransactionDate   |Unique : 360     | Examples : ['2024-11-04 08:08:08' '2024-11-04 08:09:35' '2024-11-04 08:07:04']
+
+07:03:14 - INFO : Number of duplicates : 0
+
+07:03:14 - INFO : No duplicates found in the data
+
+07:03:14 - INFO : Empty DataFrame
+Columns: [missing_data, missing_pct]
+Index: []
+07:03:14 - INFO : 0. TransactionAmount    | Number of outliers : 113  | Range : (-417.07875000000007 - 913.49125)
+07:03:14 - INFO : 1. CustomerAge          | Number of outliers : 0    | Range : (-21.0 - 107.0)
+07:03:14 - INFO : 2. TransactionDuration  | Number of outliers : 0    | Range : (-84.0 - 308.0)
+07:03:14 - INFO : 3. LoginAttempts        | Number of outliers : 122  | Range : (1.0 - 1.0)
+07:03:14 - INFO : 4. AccountBalance       | Number of outliers : 0    | Range : (-7757.304999999999 - 16940.495)
+07:03:14 - INFO : DataFrame has been loaded successfully!
+07:03:14 - INFO : Starting feature engineering...
+07:03:14 - INFO : Feature engineering completed: 34 columns total.
+07:03:15 - INFO : Feature names successfully saved..
+07:03:15 - INFO : Starting feature scaling and encoding...
+07:03:15 - INFO : Feature scaling and encoding completed
+07:05:52 - INFO : Data has successfully been loaded
+07:05:52 - INFO : Number of observations 2512
+07:05:52 - INFO : Number of features : 16
+
+07:05:53 - INFO : | Number of numeric columns : 5 | Examples : ['TransactionAmount', 'CustomerAge', 'TransactionDuration']
+
+07:05:53 - INFO : 1 TransactionAmount        | Min : 0.26            | Max : 1919.11   
+
+07:05:53 - INFO : 2 CustomerAge              | Min : 18              | Max : 80        
+
+07:05:53 - INFO : 3 TransactionDuration      | Min : 10              | Max : 300       
+
+07:05:53 - INFO : 4 LoginAttempts            | Min : 1               | Max : 5         
+
+07:05:53 - INFO : 5 AccountBalance           | Min : 101.25          | Max : 14977.99  
+
+07:05:53 - INFO : | Number of categorical columns : 11 | Examples : ['TransactionID', 'AccountID', 'TransactionDate']
+
+07:05:53 - INFO : 1 . TransactionID             |Unique : 2512    | Examples : ['TX000001' 'TX000002' 'TX000003']
+
+07:05:53 - INFO : 2 . AccountID                 |Unique : 495     | Examples : ['AC00128' 'AC00455' 'AC00019']
+
+07:05:53 - INFO : 3 . TransactionDate           |Unique : 2512    | Examples : ['2023-04-11 16:29:14' '2023-06-27 16:44:19' '2023-07-10 18:16:08']
+
+07:05:53 - INFO : 4 . TransactionType           |Unique : 2       | Examples : ['Debit' 'Credit']
+
+07:05:53 - INFO : 5 . Location                  |Unique : 43      | Examples : ['San Diego' 'Houston' 'Mesa']
+
+07:05:53 - INFO : 6 . DeviceID                  |Unique : 681     | Examples : ['D000380' 'D000051' 'D000235']
+
+07:05:53 - INFO : 7 . IP Address                |Unique : 592     | Examples : ['162.198.218.92' '13.149.61.4' '215.97.143.157']
+
+07:05:53 - INFO : 8 . MerchantID                |Unique : 100     | Examples : ['M015' 'M052' 'M009']
+
+07:05:53 - INFO : 9 . Channel                   |Unique : 3       | Examples : ['ATM' 'Online' 'Branch']
+
+07:05:53 - INFO : 10. CustomerOccupation        |Unique : 4       | Examples : ['Doctor' 'Student' 'Retired']
+
+07:05:53 - INFO : 11. PreviousTransactionDate   |Unique : 360     | Examples : ['2024-11-04 08:08:08' '2024-11-04 08:09:35' '2024-11-04 08:07:04']
+
+07:05:53 - INFO : Number of duplicates : 0
+
+07:05:53 - INFO : No duplicates found in the data
+
+07:05:53 - INFO : Empty DataFrame
+Columns: [missing_data, missing_pct]
+Index: []
+07:05:53 - INFO : 0. TransactionAmount    | Number of outliers : 113  | Range : (-417.07875000000007 - 913.49125)
+07:05:53 - INFO : 1. CustomerAge          | Number of outliers : 0    | Range : (-21.0 - 107.0)
+07:05:53 - INFO : 2. TransactionDuration  | Number of outliers : 0    | Range : (-84.0 - 308.0)
+07:05:53 - INFO : 3. LoginAttempts        | Number of outliers : 122  | Range : (1.0 - 1.0)
+07:05:53 - INFO : 4. AccountBalance       | Number of outliers : 0    | Range : (-7757.304999999999 - 16940.495)
+07:05:53 - INFO : DataFrame has been loaded successfully!
+07:05:53 - INFO : Starting feature engineering...
+07:05:53 - INFO : Feature engineering completed: 34 columns total.
+07:05:53 - INFO : Feature names successfully saved..
+07:05:53 - INFO : Starting feature scaling and encoding...
+07:05:53 - INFO : Feature scaling and encoding completed

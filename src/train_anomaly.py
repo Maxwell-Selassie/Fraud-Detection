@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from sklearn.ensemble import IsolationForest
 import joblib
 import logging
@@ -13,8 +14,14 @@ from sklearn.metrics import (
     accuracy_score,precision_score,recall_score,f1_score,roc_auc_score,classification_report
 )
 
+os.makedirs('artifacts',exist_ok=True)
+os.makedirs('models',exist_ok=True)
+
 log = logging.getLogger('ModelTraining')
-logging.basicConfig(level=logging.INFO,  format='%(asctime)s - %(levelname)s : %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(filename='logs/inference.log',
+                    level=logging.INFO,  
+                    format='%(asctime)s - %(levelname)s : %(message)s', 
+                    datefmt='%H:%M:%S')
 
 # load dataset
 def load_dataset(filename: str = 'data/processed_bank_transaction_data.csv'):
@@ -41,7 +48,7 @@ def load_preprocessor(filename: str = 'artifacts/preprocessor.joblib'):
         raise
 
 # transform df into a numpy array by fitting the preprocessor pipeline
-def fit_preprocessor_on_df(df: pd.DataFrame,preprocessor):
+def transform_with_preprocessor(df: pd.DataFrame,preprocessor):
     df = df.copy()
 
     # Define features
@@ -61,17 +68,9 @@ def target_feature(df):
 # UNSUPERVISED ANOMALY DETECTION (ISOLATION FOREST)
 # ============================================
 
-def isolation_forest(df: pd.DataFrame, preprocessor):
+def isolation_forest(df: pd.DataFrame, preprocessor,x: np.array):
     '''Train an isolation forest algorithm as basline'''
-    X = df.copy()
 
-    # Define features
-    hash_features = ['AccountID','DeviceID','IP Address']
-    hash_encode = HashingEncoder(cols=hash_features, n_components=16)
-    x_hashed = hash_encode.fit_transform(X)
-
-    x = preprocessor.fit_transform(x_hashed)
-    x
 
     # -------------------------
     # 2. Initialize Isolation Forest
@@ -104,7 +103,7 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     # -------------------------
     # 5. Analyze results
     # -------------------------
-    print("Anomalies detected:", df['AnomalyFlag'].sum(), "out of", len(df))
+    log.info("Anomalies detected:", df['AnomalyFlag'].sum(), "out of", len(df))
 
     # Quick overview of anomaly transactions
     log.info('\n',df[df['AnomalyFlag'] == 1].head(10))
@@ -113,7 +112,8 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     # 6. Save model artifact
     # -------------------------
     joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
-    print("Isolation Forest model saved successfully.")
+    log.info("Isolation Forest model saved successfully.")
+    return df, iso_forest
 
 
 def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
@@ -187,10 +187,10 @@ def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
     log.info(f"Best model '{best_model_name}' saved as '{best_model_name}_fraud_detector.pkl")
 
 def model_training():
-    df = load_dataset()
+    dataframe = load_dataset()
     preprocessor = load_preprocessor()
-    iso_forest = isolation_forest(df, preprocessor)
-    x = fit_preprocessor_on_df(df,preprocessor)
+    df,iso_forest = isolation_forest(dataframe, preprocessor)
+    x = transform_with_preprocessor(df,preprocessor)
     y = target_feature(df)
     rf_xgb = rf_xgb_training(df, x, y)
 if __name__ == '__main__':

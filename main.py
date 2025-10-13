@@ -8,7 +8,10 @@ import pandas as pd
 
 # setup logging
 log = logging.getLogger('FraudDetection')
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s',datefmt='%H:%M:%S')
+logging.basicConfig(filename='logs/inference.log',
+                    level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s : %(message)s',
+                    datefmt='%H:%M:%S')
 
 def main():
     # load df from the eda.py file
