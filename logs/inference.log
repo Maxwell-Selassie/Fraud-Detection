@@ -131,3 +131,34 @@ Index: []
 07:05:53 - INFO : Feature names successfully saved..
 07:05:53 - INFO : Starting feature scaling and encoding...
 07:05:53 - INFO : Feature scaling and encoding completed
+07:10:46 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+07:10:46 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+07:11:42 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+07:11:42 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+07:12:50 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+07:12:50 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+07:12:53 - INFO : Isolation Forest model saved successfully.
+07:12:53 - INFO : Training RandomForest...(This May Take A While)
+07:13:34 - INFO : Training XGBoost...(This May Take A While)
+07:13:44 - INFO : Best model 'Xgboost' saved as 'Xgboost_fraud_detector.pkl
+07:19:39 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+07:19:39 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+07:19:41 - INFO : Anomalies detected: 76, out of 2512
+07:19:41 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+07:19:42 - INFO : Isolation Forest model saved successfully.
+07:19:42 - INFO : Training RandomForest...(This May Take A While)
+07:20:27 - INFO : Training XGBoost...(This May Take A While)
+07:20:37 - INFO : Best model 'Xgboost' saved as 'Xgboost_fraud_detector.pkl

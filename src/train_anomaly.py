@@ -103,17 +103,19 @@ def isolation_forest(df: pd.DataFrame, preprocessor,x: np.array):
     # -------------------------
     # 5. Analyze results
     # -------------------------
-    log.info("Anomalies detected:", df['AnomalyFlag'].sum(), "out of", len(df))
+    anomaly_flag = df['AnomalyFlag'].sum()
+    log.info(f"Anomalies detected: {anomaly_flag}, out of {len(df)}")
 
     # Quick overview of anomaly transactions
-    log.info('\n',df[df['AnomalyFlag'] == 1].head(10))
+    top_10 = df[df['AnomalyFlag'] == 1].head(10)
+    log.info(f'\n{top_10}')
 
     # -------------------------
     # 6. Save model artifact
     # -------------------------
     joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
-    log.info("Isolation Forest model saved successfully.")
-    return df, iso_forest
+    log.info(f"Isolation Forest model saved successfully.")
+    return df
 
 
 def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
@@ -189,8 +191,8 @@ def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
 def model_training():
     dataframe = load_dataset()
     preprocessor = load_preprocessor()
-    df,iso_forest = isolation_forest(dataframe, preprocessor)
-    x = transform_with_preprocessor(df,preprocessor)
+    x = transform_with_preprocessor(dataframe,preprocessor)
+    df = isolation_forest(dataframe, preprocessor,x)
     y = target_feature(df)
     rf_xgb = rf_xgb_training(df, x, y)
 if __name__ == '__main__':

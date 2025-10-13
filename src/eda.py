@@ -42,7 +42,7 @@ def descriptive_overview(df: pd.DataFrame):
     if df is not None:
         log.info(f'Number of observations {df.shape[0]}')
         log.info(f'Number of features : {df.shape[1]}\n')
-        log.info('\n',df.describe(include='all').T)
+        log.info(df.describe(include='all').T)
     else:
         log.warning('DataFrame is empty!')
 
