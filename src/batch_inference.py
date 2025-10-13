@@ -1,16 +1,17 @@
+# scripts/batch_inference.py
+
 import pandas as pd
 import numpy as np
 import joblib
 import logging
 import os
 from datetime import datetime
-from feature_engineering import feature_engineer, feature_encoding
+from feature_engineering import feature_engineer
 from train_anomaly import transform_with_preprocessor
 
-os.makedirs('data',exist_ok=True)
-os.makedirs('log',exist_ok=True)
-
-
+# Ensure paths exist
+os.makedirs('data', exist_ok=True)
+os.makedirs('logs', exist_ok=True)
 
 # setup logging
 logging.basicConfig(
@@ -23,97 +24,63 @@ log = logging.getLogger('Batch_Inference')
 
 iso_forest_path = 'artifacts/isolation_forest_model.joblib'
 rf_model_path = 'artifacts/RandomForest_fraud_detector.pkl'
-preprocessor = 'artifacts/preprocessor.joblib'
+preprocessor_path = 'artifacts/preprocessor.joblib'
 
-# load iso_forest model
-def load_iso_forest(filename: str = iso_forest_path):
+
+def load_model(filename: str):
+    """Generic loader with logging"""
     try:
-        iso_forest_model = joblib.load(filename)
-        log.info(f'Isolation Forest Model successfully loaded!')
-        return iso_forest_model
+        model = joblib.load(filename)
+        log.info(f"Loaded model: {filename}")
+        return model
     except FileNotFoundError:
-        log.exception(f'Model not found! Check file path and try again!')
+        log.error(f"Model not found: {filename}")
         raise
 
-# load rf_model
-def load_rf_model(filename: str = rf_model_path):
-    try:
-        rf_model = joblib.load(filename)
-        log.info(f'rfoost Model successfully loaded!')
-        return rf_model
-    except FileNotFoundError:
-        log.exception(f'Model not found! Check file path and try again!')
-        raise
 
-# load fitted preprocessor
-def load_preprocessor(filename : str = preprocessor):
-    try:
-        preprocessor = joblib.load(filename)
-        log.info(f'Preprocessor successfully loaded!')
-        return preprocessor
-    except FileNotFoundError:
-        log.exception(f'Model not found! Check file path and try again!')
-        raise
-
-# load batch file
-def load_new_batch(filename : str) -> pd.DataFrame:
-    try:
-        df = pd.read_csv(filename)
-        log.info(f'New batch loaded with shape: {df.shape}')
-        return df
-    except Exception as e:
-        log.error(f'Failed to load batch file : {e}')
-        raise e
-    
-# batch inference
 def run_batch_inference(filepath: str):
-    log.info(f'Starting batch inference process: ')
+    """Performs full batch inference and saves predictions."""
+    log.info(f"Starting batch inference for file: {filepath}")
 
-    # load dataset
-    df = load_new_batch(filepath)
+    # Load data
+    df_orig = pd.read_csv(filepath)
+    log.info(f"Loaded batch data with shape: {df_orig.shape}")
 
-    # feature engineering and encoding
-    df = feature_engineer(df)
-    log.info(f'Feature Engineering completed')
-    preprocessor = load_preprocessor()
+    # Feature engineering
+    df = feature_engineer(df_orig.copy())
 
-    x = preprocessor.transform(df)
-    log.info(f'Feature Encoding completed')
-
-    # unsupervised predictions (isolation forest)
-    iso_forest_model = load_iso_forest()
-    df['AnomalyScore'] = iso_forest_model.decision_function(x)
-    df['is_anomaly'] = iso_forest_model.predict(x)
-    df['is_anomaly'] = df['is_anomaly'].apply(lambda x: 1 if x == -1 else 0)
-    anomaly_sum = df['is_anomaly'].sum()
-    log.info(f'IsolationForest Anomalies detected: {anomaly_sum} out of {len(df)}')
-
-    # semi supervised predictions(rf_model)
+    # Load preprocessor
+    preprocessor = load_model(preprocessor_path)
     hash_encode = transform_with_preprocessor(df)
-    df_hashed = hash_encode.fit_transform(df)
-    df = preprocessor.transform(df_hashed)
 
-    rf_model = load_rf_model()
-    df['fraud_probability'] = rf_model.predict_proba(df)[:,1]
-    threshold = 0.2
-    df['fraud_prediction'] = (df['fraud_probability'] >= threshold).astype(int)
+    x_hashed = hash_encode.transform(df)
+    X = preprocessor.transform(df)
+    log.info("Feature transformation complete")
 
-    # combine predictions
-    df['final_predictions'] = np.where((df['is_anomaly'] == 1) & df(['fraud_prediction'] == 1), 1, 0)
+    # Unsupervised (Isolation Forest)
+    iso_model = load_model(iso_forest_path)
+    df['AnomalyScore'] = iso_model.decision_function(X)
+    df['is_anomaly'] = iso_model.predict(X)
+    df['is_anomaly'] = df['is_anomaly'].apply(lambda x: 1 if x == -1 else 0)
+    log.info(f"IsolationForest anomalies detected: {df['is_anomaly'].sum()}")
+
+    # Semi-supervised (RandomForest)
+    hashed_df = preprocessor.transform(x_hashed)
+    rf_model = load_model(rf_model_path)
+    df['fraud_probability'] = rf_model.predict_proba(hashed_df)[:, 1]
+    df['fraud_prediction'] = (df['fraud_probability'] >= 0.2).astype(int)
+
+    # Combine
+    df['final_predictions'] = np.where(
+        (df['is_anomaly'] == 1) & (df['fraud_prediction'] == 1), 1, 0
+    )
 
     anomaly_count = df['final_predictions'].sum()
-    log.info(f'Final fraud detected : {anomaly_count} out of {len(df)}')
+    log.info(f"Final fraud detected: {anomaly_count}/{len(df)}")
 
+    # Save
+    output_file = f"data/predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    df.to_csv(output_file, index=False)
+    log.info(f"Predictions saved to {output_file}")
 
-    os.makedirs('data',exist_ok=True)
-    date = datetime.now().strftime('%Y%m%d_%H%M%S')
-    output_file = (f'data/predictions_{date}.csv')
-    df.to_csv(output_file,index=False)
-    log.info(f'Predictions saved to {output_file}')
-
-    return df
-
-# run script
-if __name__ == '__main__':
-    new_batch_path = (f'data/bank_transactions_data_2.csv')
-    predictions = run_batch_inference(new_batch_path)
+    return df[['AccountID', 'fraud_probability', 'final_predictions']]

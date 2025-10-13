@@ -249,3 +249,106 @@ FileNotFoundError: [Errno 2] No such file or directory: 'artifact/isolation_fore
 09:20:48 - INFO : Isolation Forest Model successfully loaded!
 09:20:48 - INFO : IsolationForest Anomalies detected: 76 out of 2512
 09:20:49 - INFO : rfoost Model successfully loaded!
+11:11:07 - INFO : Starting batch inference process: 
+11:11:07 - INFO : New batch loaded with shape: (2512, 16)
+11:11:07 - INFO : Starting feature engineering...
+11:11:07 - INFO : Feature engineering completed: 34 columns total.
+11:11:07 - INFO : Feature names successfully saved..
+11:11:07 - INFO : Feature Engineering completed
+11:11:07 - INFO : Preprocessor successfully loaded!
+11:11:07 - INFO : Feature Encoding completed
+11:11:08 - INFO : Isolation Forest Model successfully loaded!
+11:11:08 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:11:08 - INFO : rfoost Model successfully loaded!
+11:11:29 - INFO : Starting batch inference process: 
+11:11:29 - INFO : New batch loaded with shape: (2512, 16)
+11:11:29 - INFO : Starting feature engineering...
+11:11:29 - INFO : Feature engineering completed: 34 columns total.
+11:11:29 - INFO : Feature names successfully saved..
+11:11:29 - INFO : Feature Engineering completed
+11:11:29 - INFO : Preprocessor successfully loaded!
+11:11:29 - INFO : Feature Encoding completed
+11:11:29 - INFO : Isolation Forest Model successfully loaded!
+11:11:29 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:11:29 - INFO : rfoost Model successfully loaded!
+11:12:38 - INFO : Starting batch inference process: 
+11:12:38 - INFO : New batch loaded with shape: (2512, 16)
+11:12:38 - INFO : Starting feature engineering...
+11:12:38 - INFO : Feature engineering completed: 34 columns total.
+11:12:38 - INFO : Feature names successfully saved..
+11:12:38 - INFO : Feature Engineering completed
+11:12:39 - INFO : Preprocessor successfully loaded!
+11:12:39 - INFO : Feature Encoding completed
+11:12:39 - INFO : Isolation Forest Model successfully loaded!
+11:12:39 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:12:39 - INFO : rfoost Model successfully loaded!
+11:12:39 - INFO : Final fraud detected : 73 out of 2512
+11:14:14 - INFO : Starting batch inference process: 
+11:14:14 - INFO : New batch loaded with shape: (2512, 16)
+11:14:14 - INFO : Starting feature engineering...
+11:14:14 - INFO : Feature engineering completed: 34 columns total.
+11:14:14 - INFO : Feature names successfully saved..
+11:14:14 - INFO : Feature Engineering completed
+11:14:14 - INFO : Preprocessor successfully loaded!
+11:14:14 - INFO : Feature Encoding completed
+11:14:14 - INFO : Isolation Forest Model successfully loaded!
+11:14:15 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:14:15 - INFO : rfoost Model successfully loaded!
+11:14:15 - INFO : Final fraud detected : 73 out of 2512
+11:14:15 - INFO : Predictions saved to data/predictions_20251013_111415.csv
+11:16:08 - INFO : Starting batch inference process: 
+11:16:08 - INFO : New batch loaded with shape: (2512, 16)
+11:16:08 - INFO : Starting feature engineering...
+11:16:08 - INFO : Feature engineering completed: 34 columns total.
+11:16:08 - INFO : Feature names successfully saved..
+11:16:08 - INFO : Feature Engineering completed
+11:16:08 - INFO : Preprocessor successfully loaded!
+11:16:08 - INFO : Feature Encoding completed
+11:16:08 - INFO : Isolation Forest Model successfully loaded!
+11:16:09 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:16:09 - INFO : rfoost Model successfully loaded!
+11:16:09 - INFO : Final fraud detected : 73 out of 2512
+11:16:09 - INFO : Predictions saved to data/predictions_20251013_111609.csv
+11:17:20 - INFO : Starting batch inference process: 
+11:17:20 - INFO : New batch loaded with shape: (2512, 16)
+11:17:20 - INFO : Starting feature engineering...
+11:17:20 - INFO : Feature engineering completed: 34 columns total.
+11:17:20 - INFO : Feature names successfully saved..
+11:17:20 - INFO : Feature Engineering completed
+11:17:20 - INFO : Preprocessor successfully loaded!
+11:17:20 - INFO : Feature Encoding completed
+11:26:23 - INFO : Starting batch inference process: 
+11:26:23 - INFO : New batch loaded with shape: (2512, 16)
+11:26:23 - INFO : Starting feature engineering...
+11:26:23 - INFO : Feature engineering completed: 34 columns total.
+11:26:23 - INFO : Feature names successfully saved..
+11:26:23 - INFO : Feature Engineering completed
+11:26:23 - INFO : Preprocessor successfully loaded!
+11:26:23 - INFO : Feature Encoding completed
+11:26:23 - INFO : Isolation Forest Model successfully loaded!
+11:26:23 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:26:24 - INFO : rfoost Model successfully loaded!
+11:27:21 - INFO : Starting batch inference process: 
+11:27:21 - INFO : New batch loaded with shape: (2512, 16)
+11:27:21 - INFO : Starting feature engineering...
+11:27:21 - INFO : Feature engineering completed: 34 columns total.
+11:27:21 - INFO : Feature names successfully saved..
+11:27:21 - INFO : Feature Engineering completed
+11:27:21 - INFO : Preprocessor successfully loaded!
+11:27:21 - INFO : Feature Encoding completed
+11:27:21 - INFO : Isolation Forest Model successfully loaded!
+11:27:22 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:27:22 - INFO : rfoost Model successfully loaded!
+11:28:42 - INFO : Starting batch inference process: 
+11:28:42 - INFO : New batch loaded with shape: (2512, 16)
+11:28:42 - INFO : Starting feature engineering...
+11:28:42 - INFO : Feature engineering completed: 34 columns total.
+11:28:42 - INFO : Feature names successfully saved..
+11:28:42 - INFO : Feature Engineering completed
+11:28:42 - INFO : Preprocessor successfully loaded!
+11:28:42 - INFO : Feature Encoding completed
+11:28:43 - INFO : Isolation Forest Model successfully loaded!
+11:28:43 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+11:28:43 - INFO : rfoost Model successfully loaded!
+11:28:43 - INFO : Final fraud detected : 73 out of 2512
+11:28:43 - INFO : Predictions saved to data/predictions_20251013_112843.csv
