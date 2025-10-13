@@ -48,29 +48,22 @@ def load_preprocessor(filename: str = 'artifacts/preprocessor.joblib'):
         raise
 
 # transform df into a numpy array by fitting the preprocessor pipeline
-def transform_with_preprocessor(df: pd.DataFrame,preprocessor):
+def transform_with_preprocessor(df: pd.DataFrame):
     df = df.copy()
 
     # Define features
     hash_features = ['AccountID','DeviceID','IP Address']
     hash_encode = HashingEncoder(cols=hash_features, n_components=16)
-    x_hashed = hash_encode.fit_transform(df)
 
-    x = preprocessor.transform(x_hashed)
-    return x
+    return  hash_encode
 
-# target output - y
-def target_feature(df):
-    y = df['AnomalyFlag']
-    return y
 
 # ============================================
 # UNSUPERVISED ANOMALY DETECTION (ISOLATION FOREST)
 # ============================================
 
-def isolation_forest(df: pd.DataFrame, preprocessor,x: np.array):
+def isolation_forest(df: pd.DataFrame, preprocessor):
     '''Train an isolation forest algorithm as basline'''
-
 
     # -------------------------
     # 2. Initialize Isolation Forest
@@ -83,7 +76,7 @@ def isolation_forest(df: pd.DataFrame, preprocessor,x: np.array):
         n_jobs=-1,
         verbose=1
     )
-
+    x = preprocessor.fit_transform(df)
     # -------------------------
     # 3. Train the model
     # -------------------------
@@ -117,14 +110,31 @@ def isolation_forest(df: pd.DataFrame, preprocessor,x: np.array):
     log.info(f"Isolation Forest model saved successfully.")
     return df
 
-
-def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
-
+# target output - y
+def target_feature(df):
     y = df['AnomalyFlag']
+    return y
 
+def train_test_split_(df: pd.DataFrame):
+    y = target_feature(df)
     x_train,x_test,y_train,y_test = train_test_split(
-        x,y, test_size=0.2, stratify=y
+        df, y, test_size= 0.2, stratify=y
     )
+    x_train.to_csv('data/x_train.csv',index=False)
+    x_test.to_csv('data/x_test.csv',index=False)
+    y_train.to_csv('data/y_train.csv',index=False)
+    y_test.to_csv('data/y_test.csv',index=False)
+    return x_train,x_test,y_train,y_test
+
+def rf_xgb_training(df: pd.DataFrame, hash_encode):
+
+    # load the train_test splits
+    x_train,x_test,y_train,y_test = train_test_split_(df)
+
+    x_hashed = hash_encode.fit_transform(x_train)
+    preprocessor = load_preprocessor()
+    x_train = preprocessor.transform(x_hashed)
+
     # cross validation
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=30)
 
@@ -162,6 +172,8 @@ def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
     models = {'RandomForest' : rf_best_, 'Xgboost' : xgb_best_}
     results = []
 
+    x_test_hashed = hash_encode.transform(x_test)
+    x_test = preprocessor.transform(x_test_hashed)
     for name, model in models.items():
         y_probs = model.predict_proba(x_test)[:,1]
         threshold = 0.2
@@ -184,16 +196,15 @@ def rf_xgb_training(df: pd.DataFrame, x: np.array, y: pd.Series):
     # save the best model
     best_model_name = results_df.sort_values(by='f1_score',ascending=False).iloc[0]['Model']
     best_model = models[best_model_name]
-    joblib.dump(best_model,f'models/{best_model_name}_fraud_detector.pkl')
+    joblib.dump(best_model,f'artifacts/{best_model_name}_fraud_detector.pkl')
     print('-'*70)
     log.info(f"Best model '{best_model_name}' saved as '{best_model_name}_fraud_detector.pkl")
 
 def model_training():
     dataframe = load_dataset()
     preprocessor = load_preprocessor()
-    x = transform_with_preprocessor(dataframe,preprocessor)
-    df = isolation_forest(dataframe, preprocessor,x)
-    y = target_feature(df)
-    rf_xgb = rf_xgb_training(df, x, y)
+    hash_encode = transform_with_preprocessor(dataframe,preprocessor)
+    df = isolation_forest(dataframe, preprocessor)
+    rf_xgb = rf_xgb_training(df, hash_encode)
 if __name__ == '__main__':
     model_training()

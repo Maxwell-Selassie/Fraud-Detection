@@ -99,3 +99,153 @@ Index: []
 07:40:45 - INFO : Training RandomForest...(This May Take A While)
 07:41:38 - INFO : Training XGBoost...(This May Take A While)
 07:41:52 - INFO : Best model 'Xgboost' saved as 'Xgboost_fraud_detector.pkl
+08:39:03 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:39:03 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:39:05 - INFO : Anomalies detected: 76, out of 2512
+08:39:06 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+08:39:06 - INFO : Isolation Forest model saved successfully.
+08:39:38 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:39:38 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:39:40 - INFO : Anomalies detected: 76, out of 2512
+08:39:40 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+08:39:41 - INFO : Isolation Forest model saved successfully.
+08:42:03 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:42:03 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:42:05 - INFO : Anomalies detected: 76, out of 2512
+08:42:06 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+08:42:06 - INFO : Isolation Forest model saved successfully.
+08:42:06 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:42:06 - INFO : Training RandomForest...(This May Take A While)
+08:42:46 - INFO : Training XGBoost...(This May Take A While)
+08:44:42 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:44:42 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:44:44 - INFO : Anomalies detected: 76, out of 2512
+08:44:44 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+08:44:45 - INFO : Isolation Forest model saved successfully.
+08:44:45 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:44:45 - INFO : Training RandomForest...(This May Take A While)
+08:45:25 - INFO : Training XGBoost...(This May Take A While)
+08:45:35 - INFO : Best model 'RandomForest' saved as 'RandomForest_fraud_detector.pkl
+08:52:23 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:52:23 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:53:07 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:53:07 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:53:37 - INFO : Dataset successfully loaded from data/processed_bank_transaction_data.csv
+08:53:37 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:53:40 - INFO : Anomalies detected: 76, out of 2512
+08:53:40 - INFO : 
+    AccountID  TransactionAmount TransactionType     Location DeviceID  ... avg_loginAttempts loginAttemps_excess TransactionAmount_log  AnomalyFlag AnomalyScore
+6     AC00199               7.08          Credit      Seattle  D000241  ...          1.000000            0.000000              2.089392            1     0.013508
+85    AC00098            1340.19          Credit       Austin  D000574  ...          1.000000            0.000000              7.201313            1     0.014703
+101   AC00018              98.54          Credit      El Paso  D000528  ...          2.333333           -1.333333              4.600560            1     0.017546
+147   AC00161             514.95           Debit     New York  D000109  ...          2.000000            3.000000              6.246010            1     0.016954
+176   AC00363            1362.55           Debit      El Paso  D000213  ...          1.000000            0.000000              7.217847            1     0.053738
+195   AC00363               3.30          Credit  Los Angeles  D000215  ...          1.000000            0.000000              1.458615            1     0.001197
+274   AC00454            1176.28          Credit  Kansas City  D000476  ...          2.000000            3.000000              7.070962            1     0.071646
+340   AC00107            1830.00           Debit  San Antonio  D000436  ...          1.000000            0.000000              7.512618            1     0.025515
+375   AC00316            1392.54           Debit      El Paso  D000113  ...          1.500000           -0.500000              7.239603            1     0.025907
+394   AC00326               6.30           Debit     Columbus  D000539  ...          1.800000            3.200000              1.987874            1     0.025118
+
+[10 rows x 36 columns]
+08:53:41 - INFO : Isolation Forest model saved successfully.
+08:53:41 - INFO : Preprocessor successfully loaded from artifacts/preprocessor.joblib
+08:53:41 - INFO : Training RandomForest...(This May Take A While)
+08:54:28 - INFO : Training XGBoost...(This May Take A While)
+08:54:39 - INFO : Best model 'RandomForest' saved as 'RandomForest_fraud_detector.pkl
+09:11:43 - INFO : Starting batch inference process: 
+09:11:43 - ERROR : Failed to load batch file : [Errno 2] No such file or directory: 'data\\new_batch.csv'
+09:16:29 - INFO : Starting batch inference process: 
+09:16:29 - ERROR : Failed to load batch file : [Errno 2] No such file or directory: 'data/new_batch.csv'
+09:17:20 - INFO : Starting batch inference process: 
+09:17:20 - INFO : New batch loaded with shape: (503, 36)
+09:17:20 - INFO : Starting feature engineering...
+09:19:13 - INFO : Starting batch inference process: 
+09:19:13 - INFO : New batch loaded with shape: (2512, 16)
+09:19:13 - INFO : Starting feature engineering...
+09:19:13 - INFO : Feature engineering completed: 34 columns total.
+09:19:13 - INFO : Feature names successfully saved..
+09:19:13 - INFO : Feature Engineering completed
+09:19:13 - INFO : Preprocessor successfully loaded!
+09:19:13 - INFO : Feature Encoding completed
+09:19:13 - ERROR : Model not found! Check file path and try again!
+Traceback (most recent call last):
+  File "C:\Users\Maxwe\OneDrive\Documents\Clustering and Anomaly Detection\Fraud-Detection\src\batch_inference.py", line 31, in load_iso_forest
+    iso_forest_model = joblib.load(filename)
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Maxwe\AppData\Local\pypoetry\Cache\virtualenvs\fraud-detection-r6Xl52aS-py3.11\Lib\site-packages\joblib\numpy_pickle.py", line 735, in load
+    with open(filename, "rb") as f:
+         ^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'artifact/isolation_forest_model.joblib'
+09:20:12 - INFO : Starting batch inference process: 
+09:20:12 - INFO : New batch loaded with shape: (2512, 16)
+09:20:12 - INFO : Starting feature engineering...
+09:20:12 - INFO : Feature engineering completed: 34 columns total.
+09:20:13 - INFO : Feature names successfully saved..
+09:20:13 - INFO : Feature Engineering completed
+09:20:13 - INFO : Preprocessor successfully loaded!
+09:20:13 - INFO : Feature Encoding completed
+09:20:13 - INFO : Isolation Forest Model successfully loaded!
+09:20:13 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+09:20:47 - INFO : Starting batch inference process: 
+09:20:47 - INFO : New batch loaded with shape: (2512, 16)
+09:20:47 - INFO : Starting feature engineering...
+09:20:48 - INFO : Feature engineering completed: 34 columns total.
+09:20:48 - INFO : Feature names successfully saved..
+09:20:48 - INFO : Feature Engineering completed
+09:20:48 - INFO : Preprocessor successfully loaded!
+09:20:48 - INFO : Feature Encoding completed
+09:20:48 - INFO : Isolation Forest Model successfully loaded!
+09:20:48 - INFO : IsolationForest Anomalies detected: 76 out of 2512
+09:20:49 - INFO : rfoost Model successfully loaded!

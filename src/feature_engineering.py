@@ -9,6 +9,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from category_encoders import CountEncoder
 import json
+import os
+
+os.makedirs('logs',exist_ok=True)
 
 log = logging.getLogger('FeatureEngineering')
 logging.basicConfig(filename='logs/inference.log',
@@ -106,7 +109,10 @@ def feature_encoding(df: pd.DataFrame):
         ('freq',freq_transformer, freq_features)
     ],remainder='drop',verbose_feature_names_out=True)
 
+    # fit the preprocessor here
     preprocessor.fit(df)
+
+    # save the fitted object here
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
     logging.info('Feature scaling and encoding completed')
     return preprocessor
