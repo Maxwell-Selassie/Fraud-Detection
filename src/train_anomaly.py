@@ -13,9 +13,15 @@ from xgboost import XGBClassifier
 from sklearn.metrics import (
     accuracy_score,precision_score,recall_score,f1_score,roc_auc_score,classification_report
 )
+import mlflow
+import mlflow.sklearn
+import mlflow.xgboost
 
 os.makedirs('artifacts',exist_ok=True)
 os.makedirs('models',exist_ok=True)
+
+mlflow.set_tracking_uri('https://localhost:5000')
+mlflow.set_experiment('FraudDetection_AnomalyModels')
 
 log = logging.getLogger('ModelTraining')
 logging.basicConfig(filename='logs/inference.log',
@@ -68,46 +74,50 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     # -------------------------
     # 2. Initialize Isolation Forest
     # -------------------------
-    iso_forest = IsolationForest(
-        n_estimators=200,
-        contamination=0.03,        # expected fraction of anomalies (tune this)
-        max_samples='auto',
-        random_state=42,
-        n_jobs=-1,
-        verbose=1
-    )
-    x = preprocessor.fit_transform(df)
-    # -------------------------
-    # 3. Train the model
-    # -------------------------
-    iso_forest.fit(x)
+    with mlflow.start_run(run_name='IsolationForest_Baseline'):
+        iso_forest = IsolationForest(
+            n_estimators=200,
+            contamination=0.03,        # expected fraction of anomalies (tune this)
+            max_samples='auto',
+            random_state=42,
+            n_jobs=-1,
+            verbose=1
+        )
+        x = preprocessor.fit_transform(df)
+        # -------------------------
+        # 3. Train the model
+        # -------------------------
+        iso_forest.fit(x)
 
-    # -------------------------
-    # 4. Get predictions and anomaly scores
-    # -------------------------
-    # predictions: -1 = anomaly, 1 = normal
-    preds = iso_forest.predict(x)
-    scores = iso_forest.decision_function(x)  # higher score = more normal
+        # -------------------------
+        # 4. Get predictions and anomaly scores
+        # -------------------------
+        # predictions: -1 = anomaly, 1 = normal
+        preds = iso_forest.predict(x)
+        scores = iso_forest.decision_function(x)  # higher score = more normal
 
-    # Convert to readable form
-    df['AnomalyFlag'] = np.where(preds == -1, 1, 0)  # 1 = anomaly/fraud
-    df['AnomalyScore'] = -scores  # invert so higher means more anomalous
+        # Convert to readable form
+        df['AnomalyFlag'] = np.where(preds == -1, 1, 0)  # 1 = anomaly/fraud
+        df['AnomalyScore'] = -scores  # invert so higher means more anomalous
 
-    # -------------------------
-    # 5. Analyze results
-    # -------------------------
-    anomaly_flag = df['AnomalyFlag'].sum()
-    log.info(f"Anomalies detected: {anomaly_flag}, out of {len(df)}")
+        # -------------------------
+        # 5. Analyze results
+        # -------------------------
+        anomaly_count = df['AnomalyFlag'].sum()
+        mlflow.log_metric('Anomalies Detected',anomaly_count)
+        mlflow.log_param('contamination',0.03)
+        mlflow.sklearn.log_model(iso_forest,'IsolationForestModel')
+        log.info(f"Anomalies detected: {anomaly_count}, out of {len(df)}")
 
-    # Quick overview of anomaly transactions
-    top_10 = df[df['AnomalyFlag'] == 1].head(10)
-    log.info(f'\n{top_10}')
+        # Quick overview of anomaly transactions
+        top_10 = df[df['AnomalyFlag'] == 1].head(10)
+        log.info(f'\n{top_10}')
 
-    # -------------------------
-    # 6. Save model artifact
-    # -------------------------
-    joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
-    log.info(f"Isolation Forest model saved successfully.")
+        # -------------------------
+        # 6. Save model artifact
+        # -------------------------
+        joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
+        log.info(f"Isolation Forest model saved successfully.")
     return df
 
 # target output - y
@@ -139,63 +149,78 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=30)
 
     # train random forest model
-    rf_params = {
-        'n_estimators': [100, 200],
-        'max_depth': [None, 10, 20],
-        'min_samples_split': [2, 5],
-        'min_samples_leaf': [1, 2],
-    }
-    rf = RandomForestClassifier(random_state=42,class_weight='balanced')
-    rf_grid = GridSearchCV(estimator=rf, param_grid=rf_params, cv=cv, n_jobs=-1, scoring='f1', verbose=1)
-    log.info('Training RandomForest...(This May Take A While)')
-    rf_grid.fit(x_train,y_train)
+    with mlflow.start_run(run_name='RandomForest_Model'):
+        rf_params = {
+            'n_estimators': [100, 200],
+            'max_depth': [None, 10, 20],
+            'min_samples_split': [2, 5],
+            'min_samples_leaf': [1, 2],
+        }
+        rf = RandomForestClassifier(random_state=42,class_weight='balanced')
+        rf_grid = GridSearchCV(estimator=rf, param_grid=rf_params, cv=cv, n_jobs=-1, scoring='f1', verbose=1)
+        log.info('Training RandomForest...(This May Take A While)')
+        rf_grid.fit(x_train,y_train)
 
-    # best model for random forest
-    rf_best_ = rf_grid.best_estimator_
-    print('-' * 70)
-    # train xgboost model
-    xgb_params = {
-        'n_estimators': [100, 200],
-        'max_depth': [4, 6],
-        'learning_rate': [0.05, 0.1],
-        'subsample': [0.8, 1.0],
-        'colsample_bytree': [0.8, 1.0]
-    }
-    xgb = XGBClassifier(objective='binary:logistic',random_state=30,eval_metric='logloss')
-    xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, scoring='f1',verbose=1,n_jobs=-1)
-    log.info("Training XGBoost...(This May Take A While)")
-    xgb_grid.fit(x_train,y_train)
+        # best model for random forest
+        rf_best_ = rf_grid.best_estimator_
+        mlflow.log_params(rf_grid.best_params_)
+        print('-' * 70)
 
-    xgb_best_ = xgb_grid.best_estimator_
 
-    # evaluate both model and pick the best one
-    models = {'RandomForest' : rf_best_, 'Xgboost' : xgb_best_}
-    results = []
-
-    x_test_hashed = hash_encode.transform(x_test)
-    x_test = preprocessor.transform(x_test_hashed)
-    for name, model in models.items():
-        y_probs = model.predict_proba(x_test)[:,1]
+        x_test_hashed = hash_encode.transform(x_test)
+        x_test = preprocessor.transform(x_test_hashed)
+        y_probs = rf_best_.predict_proba(x_test)[:,1]
         threshold = 0.2
         y_pred = (y_probs >= threshold).astype(int)
+
         metrics = {
-            'Model' : name,
             'Accuracy' : accuracy_score(y_test,y_pred),
             'Precision' : precision_score(y_test,y_pred),
             'Recall' : recall_score(y_test,y_pred),
             'f1_score' : f1_score(y_test,y_pred),
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
-        results.append(metrics)
-        print('-'*70)
-        print(f'{name} Classification Report \n',classification_report(y_test,y_pred))
-    print('-'*70)
-    results_df = pd.DataFrame(results)
-    print('Model Comparison\n',results_df)
+        mlflow.log_metrics(metrics)
+        mlflow.sklearn.log_model(rf_best_,'RandomForestModel')
 
-    # save the best model
-    best_model_name = results_df.sort_values(by='f1_score',ascending=False).iloc[0]['Model']
-    best_model = models[best_model_name]
-    joblib.dump(best_model,f'artifacts/{best_model_name}_fraud_detector.pkl')
-    print('-'*70)
-    log.info(f"Best model '{best_model_name}' saved as '{best_model_name}_fraud_detector.pkl")
+        joblib.dump(rf_best_, "artifacts/RandomForest_fraud_detector.pkl")
+        log.info("Random Forest model logged to MLflow and saved.")
+    # train xgboost model
+
+    with mlflow.start_run(run_name='XGBoost_Model'):
+        xgb_params = {
+            'n_estimators': [100, 200],
+            'max_depth': [4, 6],
+            'learning_rate': [0.05, 0.1],
+            'subsample': [0.8, 1.0],
+            'colsample_bytree': [0.8, 1.0]
+        }
+        xgb = XGBClassifier(objective='binary:logistic',random_state=30,eval_metric='logloss')
+        xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, scoring='f1',verbose=1,n_jobs=-1)
+        log.info("Training XGBoost...(This May Take A While)")
+        xgb_grid.fit(x_train,y_train)
+
+        xgb_best_ = xgb_grid.best_estimator_
+        mlflow.log_params(xgb_grid.best_params_)
+
+        x_test_hashed = hash_encode.transform(x_test)
+        x_test = preprocessor.transform(x_test_hashed)
+
+        y_probs = xgb_best_.predict_proba(x_test)[:,1]
+        threshold = 0.2
+        y_pred = (y_probs >= threshold).astype(int)
+        metrics = {
+            'Accuracy' : accuracy_score(y_test,y_pred),
+            'Precision' : precision_score(y_test,y_pred),
+            'Recall' : recall_score(y_test,y_pred),
+            'f1_score' : f1_score(y_test,y_pred),
+            'roc_auc_score' : roc_auc_score(y_test, y_probs)
+        }
+        mlflow.log_metrics(metrics)
+        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel')
+        print('-'*70)
+
+        joblib.dump(xgb_best_, "artifacts/XGBoost_fraud_detector.pkl")
+        log.info("XGBoost model logged to MLflow and saved.")
+
+print('Both models tracked and stored in MLflow!')
