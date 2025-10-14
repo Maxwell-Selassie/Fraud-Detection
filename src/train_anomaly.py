@@ -199,12 +199,3 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
     joblib.dump(best_model,f'artifacts/{best_model_name}_fraud_detector.pkl')
     print('-'*70)
     log.info(f"Best model '{best_model_name}' saved as '{best_model_name}_fraud_detector.pkl")
-
-def model_training():
-    dataframe = load_dataset()
-    preprocessor = load_preprocessor()
-    hash_encode = transform_with_preprocessor(dataframe,preprocessor)
-    df = isolation_forest(dataframe, preprocessor)
-    rf_xgb = rf_xgb_training(df, hash_encode)
-if __name__ == '__main__':
-    model_training()
