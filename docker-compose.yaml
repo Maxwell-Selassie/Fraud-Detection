@@ -1,0 +1,102 @@
+version: '3.9'
+
+services:
+  # ==============================
+  # Postgres for Airflow + MLflow
+  # ==============================
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ===============
+  # Airflow Webserver
+  # ===============
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    restart: always
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__FERNET_KEY=some_random_fernet_key
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./artifacts:/opt/airflow/artifacts
+      - ./mlruns:/opt/airflow/mlruns
+      - ./logs:/opt/airflow/logs
+    command: >
+      bash -c "airflow db upgrade &&
+               airflow users create --username admin --password admin --firstname Max --lastname Selassie --role Admin --email admin@example.com &&
+               airflow webserver"
+
+  # ===============
+  # Airflow Scheduler
+  # ===============
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    restart: always
+    depends_on:
+      - webserver
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./data:/opt/airflow/data
+      - ./artifacts:/opt/airflow/artifacts
+      - ./mlruns:/opt/airflow/mlruns
+      - ./logs:/opt/airflow/logs
+    command: airflow scheduler
+
+  # ===============
+  # MLflow Tracking Server
+  # ===============
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.13.1
+    environment:
+      - BACKEND_STORE_URI=sqlite:///mlflow.db
+      - ARTIFACT_ROOT=/mlflow/artifacts
+    volumes:
+      - ./mlruns:/mlflow/artifacts
+      - ./mlflow.db:/mlflow/mlflow.db
+    ports:
+      - "5000:5000"
+    command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/artifacts --host 0.0.0.0
+
+  # ===============
+  # FastAPI Service (for on-demand inference)
+  # ===============
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app/api
+      - ./src:/app/src
+      - ./artifacts:/app/artifacts
+      - ./data:/app/data
+    depends_on:
+      - mlflow
+
+volumes:
+  postgres_data:

@@ -6,8 +6,9 @@ import joblib
 import logging
 import os
 from datetime import datetime
-from src.feature_engineering import feature_engineer
-from src.train_anomaly import transform_with_preprocessor
+from feature_engineering import feature_engineer
+from train_anomaly import transform_with_preprocessor
+from eda import run_eda
 
 # Ensure paths exist
 os.makedirs('data', exist_ok=True)
@@ -43,8 +44,10 @@ def run_batch_inference(filepath: str):
     log.info(f"Starting batch inference for file: {filepath}")
 
     # Load data
-    df_orig = pd.read_csv(filepath)
+    df_orig = run_eda(filepath)
     log.info(f"Loaded batch data with shape: {df_orig.shape}")
+
+
 
     # Feature engineering
     df = feature_engineer(df_orig.copy())
