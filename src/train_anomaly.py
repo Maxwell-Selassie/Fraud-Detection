@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 from sklearn.ensemble import IsolationForest
 import joblib
 import logging
@@ -17,7 +16,10 @@ import mlflow.xgboost
 from pathlib import Path
 from datetime import datetime
 import matplotlib.pyplot as plt
+from mlflow.tracking import MlflowClient
+from src.utils.MLflow_manager import register_and_promote_model
 
+# robust check to make sure all file paths are created correctly
 base_dir = Path(__file__).resolve().parents[1]
 logs_dir = base_dir / 'logs'
 logs_dir.mkdir(exist_ok=True)
@@ -25,16 +27,24 @@ Path('models').mkdir(exist_ok=True)
 Path('artifacts').mkdir(exist_ok=True)
 Path('plots').mkdir(exist_ok=True)
 
+# log to train_anomaly.log
 logs_path = logs_dir / 'train_anomaly.log'
 
 mlflow.set_tracking_uri('http://localhost:5000')
 mlflow.set_experiment('FraudDetection_AnomalyModels')
 
+# logger 
 log = logging.getLogger('ModelTraining')
 logging.basicConfig(filename=logs_path,
                     level=logging.INFO,  
                     format='%(asctime)s - %(levelname)s : %(message)s', 
                     datefmt='%H:%M:%S')
+
+
+# -----------------
+# utility functions
+# -----------------
+
 
 # load dataset
 def load_dataset(filename: str = 'data/processed_bank_transaction_data.csv'):
@@ -67,7 +77,6 @@ def get_hash_encoder(df: pd.DataFrame):
     # Define features
     hash_features = ['AccountID','DeviceID','IP Address']
     hash_encode = HashingEncoder(cols=hash_features, n_components=16)
-
     return  hash_encode
 
 
@@ -114,17 +123,16 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
         mlflow.log_metric('Anomalies Detected',anomaly_count)
         mlflow.log_param('contamination',0.03)
         mlflow.sklearn.log_model(iso_forest,'IsolationForestModel')
+
         log.info(f"Anomalies detected: {anomaly_count}, out of {len(df)}")
 
-        # Quick overview of anomaly transactions
-        top_10 = df[df['AnomalyFlag'] == 1].head(10)
-        log.info(f'\n{top_10}')
+        # promote to production immediately as a baseline
+        client = MlflowClient()
+        model_name = 'IsolationForestModel'
+        latest_version = client.get_latest_versions(model_name, stages=['None'])[0].version
+        client.transition_model_version_stage(model_name,latest_version,stage='Production',archive_existing_versions=True)
+        print(f'IsolationForestModel promoted to production')
 
-        # -------------------------
-        # 6. Save model artifact
-        # -------------------------
-        joblib.dump(iso_forest, "artifacts/isolation_forest_model.joblib")
-        log.info(f"Isolation Forest model saved successfully.")
     return df
 
 def train_test_split_(df: pd.DataFrame):
@@ -153,8 +161,11 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
     # cross validation
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=30)
 
+    # Track model performances
+    model_results = {}
+
     # train random forest model
-    with mlflow.start_run(run_name='RandomForest_Model'):
+    with mlflow.start_run(run_name='RandomForest_Model') as run:
         rf_params = {
             'n_estimators': [100, 200],
             'max_depth': [None, 10, 20],
@@ -188,11 +199,10 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(rf_best_,'RandomForestModel')
+        mlflow.sklearn.log_model(rf_best_,artifact_path='fraud_rf_model',registered_model_name='RandomForestModel')
 
-        timestamp = datetime.now().strftime('%Y:%m:%d-%H:%M:%S')
-        joblib.dump(rf_best_, f"artifacts/RandomForest_fraud_detector_{timestamp}.pkl")
-        log.info("Random Forest model logged to MLflow and saved.")
+        model_results['FraudRFModel'] = metrics['f1_score']
+        log.info(f"RF  metrics : {metrics}")
 
         feat_importance = pd.Series(rf_best_.feature_importances_)
         feat_importance.nlargest(20).plot(kind='barh',title='Top Features')
@@ -200,7 +210,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
         plt.savefig('plots/rf_feature_importance.png')
     # train xgboost model
 
-    with mlflow.start_run(run_name='XGBoost_Model'):
+    with mlflow.start_run(run_name='XGBoost_Model') as run:
         xgb_params = {
             'n_estimators': [100, 200],
             'max_depth': [4, 6],
@@ -209,7 +219,9 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
             'colsample_bytree': [0.8, 1.0]
         }
         xgb = XGBClassifier(objective='binary:logistic',random_state=30,eval_metric='logloss')
+
         xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, scoring='f1',verbose=1,n_jobs=-1)
+
         log.info("Training XGBoost...(This May Take A While)")
         xgb_grid.fit(x_train,y_train)
 
@@ -228,15 +240,29 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel')
-        print('-'*70)
+        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',artifact_path='fraud_xgb_model',registered_model_name='FraudXGBModel')
+        
+        model_results['FraudXGBModel'] = metrics['f1_score']
+        log.info(f'XGB metrics : {metrics}')
 
-        joblib.dump(xgb_best_, f"artifacts/XGBoost_fraud_detector_{timestamp}.pkl")
-        log.info("XGBoost model logged to MLflow and saved.")
 
         feat_importance = pd.Series(rf_best_.feature_importances_)
         feat_importance.nlargest(20).plot(kind='barh',title='Top Features')
         plt.tight_layout()
         plt.savefig('plots/rf_feature_importance.png')
 
-print('Both models tracked and stored in MLflow!')
+    print('Both models tracked and stored in MLflow!')
+
+    # -----compare and promote-----------
+    best_model_name = max(model_results, key=model_results.get)
+    client = MlflowClient()
+    latest_version = client.get_latest_versions(best_model_name,stages=['None'])[0].version
+
+    client.transition_model_version_stage(
+        name = best_model_name,
+        version = latest_version,
+        stage = 'Production',
+        archive_existing_versions= True
+    )
+
+    print(f'Best Model : {best_model_name} (f1 score : {model_results[best_model_name]:.4f} promoted to PRODUCTION!')
