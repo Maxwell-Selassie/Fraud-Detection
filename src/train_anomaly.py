@@ -5,26 +5,33 @@ import joblib
 import logging
 import numpy as np
 from category_encoders import HashingEncoder
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold
 from xgboost import XGBClassifier
 from sklearn.metrics import (
-    accuracy_score,precision_score,recall_score,f1_score,roc_auc_score,classification_report
+    accuracy_score,precision_score,recall_score,f1_score,roc_auc_score
 )
 import mlflow
 import mlflow.sklearn
 import mlflow.xgboost
+from pathlib import Path
+from datetime import datetime
+import matplotlib.pyplot as plt
 
-os.makedirs('artifacts',exist_ok=True)
-os.makedirs('models',exist_ok=True)
+base_dir = Path(__file__).resolve().parents[1]
+logs_dir = base_dir / 'logs'
+logs_dir.mkdir(exist_ok=True)
+Path('models').mkdir(exist_ok=True)
+Path('artifacts').mkdir(exist_ok=True)
+Path('plots').mkdir(exist_ok=True)
 
-mlflow.set_tracking_uri('https://localhost:5000')
+logs_path = logs_dir / 'train_anomaly.log'
+
+mlflow.set_tracking_uri('http://localhost:5000')
 mlflow.set_experiment('FraudDetection_AnomalyModels')
 
 log = logging.getLogger('ModelTraining')
-logging.basicConfig(filename='logs/inference.log',
+logging.basicConfig(filename=logs_path,
                     level=logging.INFO,  
                     format='%(asctime)s - %(levelname)s : %(message)s', 
                     datefmt='%H:%M:%S')
@@ -54,7 +61,7 @@ def load_preprocessor(filename: str = 'artifacts/preprocessor.joblib'):
         raise
 
 # transform df into a numpy array by fitting the preprocessor pipeline
-def transform_with_preprocessor(df: pd.DataFrame):
+def get_hash_encoder(df: pd.DataFrame):
     df = df.copy()
 
     # Define features
@@ -120,13 +127,8 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
         log.info(f"Isolation Forest model saved successfully.")
     return df
 
-# target output - y
-def target_feature(df):
-    y = df['AnomalyFlag']
-    return y
-
 def train_test_split_(df: pd.DataFrame):
-    y = target_feature(df)
+    y = df['AnomalyFlag']
     x_train,x_test,y_train,y_test = train_test_split(
         df, y, test_size= 0.2, stratify=y
     )
@@ -142,7 +144,10 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
     x_train,x_test,y_train,y_test = train_test_split_(df)
 
     x_hashed = hash_encode.fit_transform(x_train)
+
     preprocessor = load_preprocessor()
+
+    preprocessor.fit(x_hashed)
     x_train = preprocessor.transform(x_hashed)
 
     # cross validation
@@ -169,6 +174,8 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
 
         x_test_hashed = hash_encode.transform(x_test)
         x_test = preprocessor.transform(x_test_hashed)
+
+
         y_probs = rf_best_.predict_proba(x_test)[:,1]
         threshold = 0.2
         y_pred = (y_probs >= threshold).astype(int)
@@ -183,8 +190,14 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
         mlflow.log_metrics(metrics)
         mlflow.sklearn.log_model(rf_best_,'RandomForestModel')
 
-        joblib.dump(rf_best_, "artifacts/RandomForest_fraud_detector.pkl")
+        timestamp = datetime.now().strftime('%Y:%m:%d-%H:%M:%S')
+        joblib.dump(rf_best_, f"artifacts/RandomForest_fraud_detector_{timestamp}.pkl")
         log.info("Random Forest model logged to MLflow and saved.")
+
+        feat_importance = pd.Series(rf_best_.feature_importances_)
+        feat_importance.nlargest(20).plot(kind='barh',title='Top Features')
+        plt.tight_layout()
+        plt.savefig('plots/rf_feature_importance.png')
     # train xgboost model
 
     with mlflow.start_run(run_name='XGBoost_Model'):
@@ -203,24 +216,27 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
         xgb_best_ = xgb_grid.best_estimator_
         mlflow.log_params(xgb_grid.best_params_)
 
-        x_test_hashed = hash_encode.transform(x_test)
-        x_test = preprocessor.transform(x_test_hashed)
 
         y_probs = xgb_best_.predict_proba(x_test)[:,1]
         threshold = 0.2
         y_pred = (y_probs >= threshold).astype(int)
         metrics = {
             'Accuracy' : accuracy_score(y_test,y_pred),
-            'Precision' : precision_score(y_test,y_pred),
-            'Recall' : recall_score(y_test,y_pred),
-            'f1_score' : f1_score(y_test,y_pred),
+            'Precision' : precision_score(y_test,y_pred,zero_division=0),
+            'Recall' : recall_score(y_test,y_pred,zero_division=0),
+            'f1_score' : f1_score(y_test,y_pred,zero_division=0),
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
         mlflow.xgboost.log_model(xgb_best_,'XGBoostModel')
         print('-'*70)
 
-        joblib.dump(xgb_best_, "artifacts/XGBoost_fraud_detector.pkl")
+        joblib.dump(xgb_best_, f"artifacts/XGBoost_fraud_detector_{timestamp}.pkl")
         log.info("XGBoost model logged to MLflow and saved.")
+
+        feat_importance = pd.Series(rf_best_.feature_importances_)
+        feat_importance.nlargest(20).plot(kind='barh',title='Top Features')
+        plt.tight_layout()
+        plt.savefig('plots/rf_feature_importance.png')
 
 print('Both models tracked and stored in MLflow!')

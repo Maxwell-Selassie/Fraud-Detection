@@ -120,8 +120,6 @@ def feature_encoding(df: pd.DataFrame):
         ('freq',freq_transformer, freq_features)
     ],remainder='passthrough',verbose_feature_names_out=True)
 
-    # fit the preprocessor here
-    preprocessor.fit(df)
 
     # save the fitted object here
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
