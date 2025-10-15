@@ -1,0 +1,24 @@
+FROM apache/airflow:2.9.0-python3.10
+
+# Install Poetry
+RUN pip install poetry
+
+# Set workdir
+WORKDIR /opt/airflow
+
+# Copy pyproject.toml and poetry.lock
+COPY ../pyproject.toml ../poetry.lock ./
+
+# Install dependencies using Poetry
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
+
+# Copy DAGs and source code
+COPY dags ./dags
+COPY ../src ./src
+
+# Entrypoint script (optional)
+COPY scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

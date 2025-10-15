@@ -14,17 +14,26 @@ import warnings
 warnings.filterwarnings('ignore')
 import logging
 import os
+from pathlib import Path
 
-os.makedirs('logs',exist_ok=True)
+base_dir = Path(__file__).resolve().parents[1]
+data_dir = base_dir / 'data'
+logs_dir = base_dir / 'logs'
+plots_dir = base_dir / 'plots'
 
+plots_dir.mkdir(exist_ok=True)
+logs_dir.mkdir(exist_ok=True)
+data_dir.mkdir(exist_ok=True)
+
+logs_path = logs_dir / 'eda.log'
 log = logging.getLogger('Exploratory_Data_Analysis')
-logging.basicConfig(filename='logs/inference.log',
+logging.basicConfig(filename=logs_path,
                     level=logging.INFO,
                     format='%(asctime)s - %(levelname)s : %(message)s', 
                     datefmt='%H:%M:%S')
 
 
-def load_data(filename: str = 'data/bank_transactions_data_2.csv'):
+def load_data(filename: str = data_dir/'bank_transactions_data_2.csv'):
     try:
         if os.path.exists(filename):
             df = pd.read_csv(filename)
@@ -44,6 +53,12 @@ def descriptive_overview(df: pd.DataFrame):
         log.info(f'Number of features : {df.shape[1]}\n')
         describe = df.describe(include='all').T
         log.info(f'\n{describe}')
+
+        return {
+            'n_observations' : df.shape[0],
+            'n_features' : df.shape[1],
+            'describe' : df.describe(include='all').T
+        }
     else:
         log.warning('DataFrame is empty!')
 
@@ -103,15 +118,29 @@ def outlier_summary(df: pd.DataFrame, numeric_col: list[str]):
         outlier, lower, upper = check_outliers(df, col)
         log.info(f'{i}. {col:<20} | Number of outliers : {len(outlier):<4} | Range : ({lower} - {upper})')
 
-def run_eda(filename: str = '../data/bank_transactions_data_2.csv'):
+def run_eda(filename: str = data_dir / 'bank_transactions_data_2.csv'):
     df = load_data()
-    descriptive_overview(df)
+    describe_summary = descriptive_overview(df)
     num_cols = numeric_cols_summary(df)
-    category_cols_summary(df)
+    category_cols = category_cols_summary(df)
     duplicate_data(df)
     missing_data(df)
     outlier_summary(df, num_cols)
-    return df
+
+    summary_path = Path('artifacts/eda_summary.csv')
+    summary_path.parent.mkdir(exist_ok=True)
+    describe_summary.to_csv(summary_path)
+    log.info(f'EDA summary saved to {summary_path}')
+
+    
+    return {
+        'data' : df,
+        'num_cols' : num_cols,
+        'category_cols' : category_cols,
+        'summary' : describe_summary
+    }
+
+
 
 
 # ---univariate analysis------
