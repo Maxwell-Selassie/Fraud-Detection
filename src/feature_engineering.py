@@ -9,12 +9,19 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from category_encoders import CountEncoder
 import json
-import os
+from pathlib import Path
 
-os.makedirs('logs',exist_ok=True)
+base_dir = Path(__file__).resolve().parents[1]
+logs_dir = base_dir / 'logs'
+logs_dir.mkdir(exist_ok=True)
+Path('data').mkdir(exist_ok=True)
+Path('artifacts').mkdir(exist_ok=True)
+
+logs_path = logs_dir / 'feature_engineering.log'
 
 log = logging.getLogger('FeatureEngineering')
-logging.basicConfig(filename='logs/inference.log',
+
+logging.basicConfig(filename=logs_path,
                     level=logging.INFO, format='%(asctime)s - %(levelname)s : %(message)s', 
                     datefmt='%H:%M:%S')
 
@@ -24,6 +31,7 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     # Ratios & Aggregates
     df['amount_to_balance_ratio'] = np.where(df['AccountBalance'] > 0,
                     df['TransactionAmount'] / df['AccountBalance'], 0)
+    
     df['avg_txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('mean')
     df['txn_amount_account'] = df.groupby('AccountID')['TransactionAmount'].transform('count')
 
@@ -40,7 +48,9 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     df['avg_time_btwn_txns'] = df.groupby('AccountID')['diff_btwn_txn_times'].transform('mean')
 
     # Behavioral ratios
-    df['amount_to_user_avg'] = df['TransactionAmount'] / df['avg_txn_amount_account']
+    df['amount_to_user_avg'] = np.where(df['avg_txn_amount_account'] > 0,
+        df['TransactionAmount'] / df['avg_txn_amount_account'] , 0)
+    
     df['unique_merchant_user'] = df.groupby('AccountID')['MerchantID'].transform('nunique')
 
     # Temporal features
@@ -77,9 +87,11 @@ def feature_engineer(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def feature_encoding(df: pd.DataFrame):
-    # define numeric features
+    # define features
     log.info('Starting feature scaling and encoding...')
-    numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()
+
+    robust_features = ['AccountBalance', 'TransactionAmount_log']
+    numeric_features = list(set(df.select_dtypes(include=[np.number]).columns) - set(robust_features))
     one_hot_features = ['Channel','CustomerOccupation','TransactionType']
     freq_features = ['Location','MerchantID']
 
@@ -88,7 +100,6 @@ def feature_encoding(df: pd.DataFrame):
         ('scaler', StandardScaler())
     ])
 
-    robust_features = ['AccountBalance', 'TransactionAmount_log']
     robust_transformer = Pipeline(steps=[
         ('robust', RobustScaler())
     ])
@@ -107,7 +118,7 @@ def feature_encoding(df: pd.DataFrame):
         ('robust',robust_transformer,robust_features),
         ('onehot',onehot_transformer,one_hot_features),
         ('freq',freq_transformer, freq_features)
-    ],remainder='drop',verbose_feature_names_out=True)
+    ],remainder='passthrough',verbose_feature_names_out=True)
 
     # fit the preprocessor here
     preprocessor.fit(df)
