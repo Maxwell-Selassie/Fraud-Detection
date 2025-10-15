@@ -14,12 +14,14 @@ import mlflow
 import mlflow.sklearn
 import mlflow.xgboost
 from pathlib import Path
-from datetime import datetime
 import matplotlib.pyplot as plt
 from mlflow.tracking import MlflowClient
 from src.utils.MLflow_manager import register_and_promote_model
 
-# robust check to make sure all file paths are created correctly
+# -----------------------
+# paths and logging setup
+# -----------------------
+
 base_dir = Path(__file__).resolve().parents[1]
 logs_dir = base_dir / 'logs'
 logs_dir.mkdir(exist_ok=True)
@@ -90,7 +92,7 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
     # -------------------------
     # 2. Initialize Isolation Forest
     # -------------------------
-    with mlflow.start_run(run_name='IsolationForest_Baseline'):
+    with mlflow.start_run(run_name='IsolationForest_Baseline') as run:
         iso_forest = IsolationForest(
             n_estimators=200,
             contamination=0.03,        # expected fraction of anomalies (tune this)
