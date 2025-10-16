@@ -151,14 +151,12 @@ def train_test_split_(df: pd.DataFrame):
     y_test.to_csv('data/y_test.csv',index=False)
     return x_train,x_test,y_train,y_test
 
-def rf_xgb_training(df: pd.DataFrame, hash_encode):
+def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
 
     # load the train_test splits
     x_train,x_test,y_train,y_test = train_test_split_(df)
 
     x_hashed = hash_encode.fit_transform(x_train)
-
-    preprocessor = load_preprocessor()
 
     preprocessor.fit(x_hashed)
     x_train = preprocessor.transform(x_hashed)
@@ -271,3 +269,11 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
     )
 
     print(f'Best Model : {best_model_name} (f1 score : {model_results[best_model_name]:.4f} promoted to PRODUCTION!')
+
+if __name__ == "__main__":
+    df = load_dataset()
+    preprocessor = load_preprocessor()
+    hash_encode = get_hash_encoder()
+
+    df = isolation_forest(df, preprocessor)
+    rf_xgb_training(df, hash_encode,preprocessor)
