@@ -1,0 +1,22 @@
+artifact_path: file:///C:/Users/Maxwe/OneDrive/Documents/Clustering and Anomaly Detection/Fraud-Detection/mlruns/1/models/m-c3522eb590e84466b7e44c93449de10a/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.11.9
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.4.0
+model_id: m-c3522eb590e84466b7e44c93449de10a
+model_size_bytes: 2636334
+model_uuid: m-c3522eb590e84466b7e44c93449de10a
+prompts: null
+run_id: 0801e49d6dea45e78f0887e14baa7eb7
+utc_time_created: '2025-10-16 16:06:21.876406'

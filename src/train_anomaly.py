@@ -7,7 +7,7 @@ from category_encoders import HashingEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split, StratifiedKFold
 from xgboost import XGBClassifier
-from sklearn.metrics import (
+from sklearn.metrics import(
     accuracy_score,precision_score,recall_score,f1_score,roc_auc_score
 )
 import mlflow
@@ -89,7 +89,7 @@ def get_hash_encoder(df: pd.DataFrame):
 # UNSUPERVISED ANOMALY DETECTION (ISOLATION FOREST)
 # ============================================
 
-def isolation_forest(df: pd.DataFrame, preprocessor):
+def isolation_forest(df: pd.DataFrame, preprocessor, hash_encode):
     '''Train an isolation forest algorithm as basline'''
 
     # -------------------------
@@ -104,7 +104,8 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
             n_jobs=-1,
             verbose=1
         )
-        x = preprocessor.fit_transform(df)
+        x_hashed = hash_encode.fit_transform(df)
+        x = preprocessor.fit_transform(x_hashed)
         # -------------------------
         # 3. Train the model
         # -------------------------
@@ -134,10 +135,19 @@ def isolation_forest(df: pd.DataFrame, preprocessor):
         # promote to production immediately as a baseline
         client = MlflowClient()
         model_name = 'IsolationForestModel'
-        latest_version = client.get_latest_versions(model_name, stages=['None'])[0].version
-        client.transition_model_version_stage(model_name,latest_version,stage='Production',archive_existing_versions=True)
-        print(f'IsolationForestModel promoted to production')
+        model_uri = f'runs:/{run.info.run_id}/IsolationForestModel'
 
+        # fetch the latest version of the model
+        try:
+            latest_version = client.get_latest_versions(model_name, stages=['None'])[0].version
+            client.transition_model_version_stage(model_name,latest_version,
+                                                stage='Production',archive_existing_versions=True)
+            print(f'IsolationForestModel promoted to production')
+
+        # if model not found, register it for the first time
+        except mlflow.exceptions.RestException:
+            result = mlflow.register_model(model_uri=model_uri,name=model_name)
+            print(f'Registered new model: {model_name} (version {result.version})')
     return df
 
 def train_test_split_(df: pd.DataFrame):
@@ -176,7 +186,8 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'min_samples_leaf': [1, 2],
         }
         rf = RandomForestClassifier(random_state=42,class_weight='balanced')
-        rf_grid = GridSearchCV(estimator=rf, param_grid=rf_params, cv=cv, n_jobs=-1, scoring='f1', verbose=1)
+        rf_grid = GridSearchCV(estimator=rf, param_grid=rf_params, 
+                            cv=cv, n_jobs=-1, scoring='f1', verbose=1)
         log.info('Training RandomForest...(This May Take A While)')
         rf_grid.fit(x_train,y_train)
 
@@ -202,7 +213,8 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(rf_best_,artifact_path='fraud_rf_model',registered_model_name='RandomForestModel')
+        mlflow.sklearn.log_model(rf_best_,artifact_path='fraud_rf_model',
+                                registered_model_name='RandomForestModel')
 
         model_results['FraudRFModel'] = metrics['f1_score']
         log.info(f"RF  metrics : {metrics}")
@@ -221,9 +233,11 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'subsample': [0.8, 1.0],
             'colsample_bytree': [0.8, 1.0]
         }
-        xgb = XGBClassifier(objective='binary:logistic',random_state=30,eval_metric='logloss')
+        xgb = XGBClassifier(objective='binary:logistic',
+                            random_state=30,eval_metric='logloss')
 
-        xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, scoring='f1',verbose=1,n_jobs=-1)
+        xgb_grid = GridSearchCV(estimator=xgb,param_grid=xgb_params, 
+                                scoring='f1',verbose=1,n_jobs=-1)
 
         log.info("Training XGBoost...(This May Take A While)")
         xgb_grid.fit(x_train,y_train)
@@ -243,7 +257,8 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',artifact_path='fraud_xgb_model',registered_model_name='XGBoostModel')
+        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',
+                artifact_path='fraud_xgb_model',registered_model_name='XGBoostModel')
         
         model_results['FraudXGBModel'] = metrics['f1_score']
         log.info(f'XGB metrics : {metrics}')
@@ -259,13 +274,32 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
     # ------------compare and promote-----------
     best_model_name = max(model_results, key=model_results.get)
     client = MlflowClient()
-    latest_version = client.get_latest_versions(best_model_name,stages=['None'])[0].version
 
+    # Try to fetch the latest version of the best model
+    try:
+        latest_version = client.get_latest_versions(best_model_name,stages=['None'])[0].version
+        print(f"Found existing model '{best_model_name}' (version {latest_version}) in registry")
+
+    # fallback: if model not registered, register it now
+    except mlflow.exceptions.RestException:
+        print(f"Model '{best_model_name}' not found in registry - registering it now...")
+
+        # construct model URI based on the current run
+        if 'RF' in best_model_name:
+            model_uri = f'run:/{run.info.run_id}/fraud_rf_model'
+        else:
+            model_uri = f'run:/{run.info.run_id}/fraud_xgb_model'
+
+        result = mlflow.register_model(model_uri=model_uri, name=best_model_name)
+        latest_version = result.version
+        print(f"Registered New Model :'{best_model_name} as version {latest_version}'")
+
+    # transition the best model to production stage
     client.transition_model_version_stage(
         name = best_model_name,
         version = latest_version,
         stage = 'Production',
-        archive_existing_versions= True
+        archive_existing_versions= True # archive older runs automatically
     )
 
     print(f'Best Model : {best_model_name} (f1 score : {model_results[best_model_name]:.4f} promoted to PRODUCTION!')
@@ -273,7 +307,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
 if __name__ == "__main__":
     df = load_dataset()
     preprocessor = load_preprocessor()
-    hash_encode = get_hash_encoder()
+    hash_encode = get_hash_encoder(df)
 
-    df = isolation_forest(df, preprocessor)
+    df = isolation_forest(df, preprocessor, hash_encode)
     rf_xgb_training(df, hash_encode,preprocessor)
