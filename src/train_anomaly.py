@@ -16,7 +16,6 @@ import mlflow.xgboost
 from pathlib import Path
 import matplotlib.pyplot as plt
 from mlflow.tracking import MlflowClient
-from src.utils.MLflow_manager import register_and_promote_model
 
 # -----------------------
 # paths and logging setup
@@ -31,6 +30,10 @@ Path('plots').mkdir(exist_ok=True)
 
 # log to train_anomaly.log
 logs_path = logs_dir / 'train_anomaly.log'
+
+# --------------------
+# MLflow configuration
+# --------------------
 
 mlflow.set_tracking_uri('http://localhost:5000')
 mlflow.set_experiment('FraudDetection_AnomalyModels')
@@ -242,7 +245,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',artifact_path='fraud_xgb_model',registered_model_name='FraudXGBModel')
+        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',artifact_path='fraud_xgb_model',registered_model_name='XGBoostModel')
         
         model_results['FraudXGBModel'] = metrics['f1_score']
         log.info(f'XGB metrics : {metrics}')

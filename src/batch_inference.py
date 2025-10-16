@@ -1,4 +1,4 @@
-# scripts/batch_inference.py
+# src/batch_inference.py
 
 import pandas as pd
 import numpy as np
@@ -6,9 +6,9 @@ import joblib
 import logging
 from pathlib import Path
 from datetime import datetime
-from src.feature_engineering import feature_engineer
-from src.train_anomaly import get_hash_encoder
-from src.eda import run_eda
+from feature_engineering import feature_engineer
+from train_anomaly import get_hash_encoder
+from eda import run_eda
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -134,3 +134,7 @@ def run_batch_inference(filepath: str, threshold: float = 0.2):
     log.info(f"Predictions saved to {output_file}")
 
     return df[['AccountID', 'fraud_probability', 'final_predictions']]
+
+if __name__ == '__main__':
+    sample_path = 'data/bank_transactions_data_2.csv'
+    run_batch_inference(sample_path)
