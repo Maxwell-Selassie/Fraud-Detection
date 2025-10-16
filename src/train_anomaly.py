@@ -213,7 +213,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(rf_best_,artifact_path='fraud_rf_model',
+        mlflow.log_model(rf_best_,artifact_path='fraud_rf_model',
                                 registered_model_name='RandomForestModel')
 
         model_results['FraudRFModel'] = metrics['f1_score']
@@ -257,7 +257,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode,preprocessor):
             'roc_auc_score' : roc_auc_score(y_test, y_probs)
         }
         mlflow.log_metrics(metrics)
-        mlflow.xgboost.log_model(xgb_best_,'XGBoostModel',
+        mlflow.log_model(xgb_best_,'XGBoostModel',
                 artifact_path='fraud_xgb_model',registered_model_name='XGBoostModel')
         
         model_results['FraudXGBModel'] = metrics['f1_score']
