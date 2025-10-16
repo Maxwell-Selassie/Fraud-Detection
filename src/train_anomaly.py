@@ -258,7 +258,7 @@ def rf_xgb_training(df: pd.DataFrame, hash_encode):
 
     print('Both models tracked and stored in MLflow!')
 
-    # -----compare and promote-----------
+    # ------------compare and promote-----------
     best_model_name = max(model_results, key=model_results.get)
     client = MlflowClient()
     latest_version = client.get_latest_versions(best_model_name,stages=['None'])[0].version
