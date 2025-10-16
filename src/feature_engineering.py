@@ -125,3 +125,8 @@ def feature_encoding(df: pd.DataFrame):
     joblib.dump(preprocessor, 'artifacts/preprocessor.joblib')
     logging.info('Feature scaling and encoding completed')
     return preprocessor
+
+if __name__ == '__main__':
+    raw_df = pd.read_csv('data/bank_transactions_data_2.csv')
+    df = feature_engineer(raw_df)
+    feature_encoding(df)

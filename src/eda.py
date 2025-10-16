@@ -127,11 +127,6 @@ def run_eda(filename: str = data_dir / 'bank_transactions_data_2.csv'):
     missing_data(df)
     outlier_summary(df, num_cols)
 
-    summary_path = Path('artifacts/eda_summary.csv')
-    summary_path.parent.mkdir(exist_ok=True)
-    describe_summary.to_csv(summary_path)
-    log.info(f'EDA summary saved to {summary_path}')
-
     
     return {
         'data' : df,
@@ -139,7 +134,6 @@ def run_eda(filename: str = data_dir / 'bank_transactions_data_2.csv'):
         'category_cols' : category_cols,
         'summary' : describe_summary
     }
-
 
 
 
@@ -177,3 +171,8 @@ def advanced_visuals(df: pd.DataFrame, numeric_cols: list[str], category_cols: l
     plt.tight_layout()
     plt.show()
 
+if __name__=='__main__':
+    results = run_eda()
+    num_cols = results['data'].select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = ['TransactionType','Channel','CustomerOccupation']
+    visuals = advanced_visuals(results['data'], num_cols, cat_cols)
