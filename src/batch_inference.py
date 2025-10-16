@@ -4,46 +4,74 @@ import pandas as pd
 import numpy as np
 import joblib
 import logging
-import os
+from pathlib import Path
 from datetime import datetime
-from feature_engineering import feature_engineer
-from train_anomaly import transform_with_preprocessor
-from eda import run_eda
+from src.feature_engineering import feature_engineer
+from src.train_anomaly import get_hash_encoder
+from src.eda import run_eda
+import mlflow
+from mlflow.tracking import MlflowClient
 
-# Ensure paths exist
-os.makedirs('data', exist_ok=True)
-os.makedirs('logs', exist_ok=True)
+# -----------------------
+# paths and logging setup
+# -----------------------
+
+base_dir = Path(__file__).resolve().parents[1]
+logs_dir = base_dir / 'logs'
+
+Path('logs').mkdir(exist_ok=True)
+Path('data').mkdir(exist_ok=True)
+
+log_path = logs_dir / 'batch_inference.log'
 
 # setup logging
 logging.basicConfig(
-    filename='logs/inference.log',
+    filename=log_path,
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 log = logging.getLogger('Batch_Inference')
 
-iso_forest_path = 'artifacts/isolation_forest_model.joblib'
-rf_model_path = 'artifacts/RandomForest_fraud_detector.pkl'
-preprocessor_path = 'artifacts/preprocessor.joblib'
+# --------------------
+# MLflow configuration
+# --------------------
+mlflow.set_tracking_uri('http://localhost:5000')
+mlflow.set_experiment('FraudDetection_AnomalyModels')
+
+# model regristry names 
+iso_forest_name = 'IsolationForestModel'
+rf_model_name = 'RandomForestModel'
+xgb_model_name = 'XGBoostModel'
 
 
-def load_model(filename: str):
-    """Generic loader with logging"""
+# ===============================
+# load model from mlflow registry
+# ===============================
+
+def load_production_model(model_name: str):
+    '''Load the Production version of a model registered in the mlflow model registry'''
     try:
-        model = joblib.load(filename)
-        log.info(f"Loaded model: {filename}")
+        model_uri = f'models:/{model_name}/Production'
+        log.info(f'Loading Production Model From Registry: {model_uri}')
+
+        model = mlflow.sklearn.load_model(model_uri)
+        log.info(f'Successfully loaded Model: {model_name}')
         return model
-    except FileNotFoundError:
-        log.error(f"Model not found: {filename}")
+    except Exception as e:
+        log.error(f'Failed to load model {model_name} : {e}')
         raise
 
+# ========================
+# batch inference function
+# ========================
 
-def run_batch_inference(filepath: str):
-    """Performs full batch inference and saves predictions."""
+def run_batch_inference(filepath: str, threshold: float = 0.2):
+    """Performs full batch inference using MLflow Model Registry.
+    Combines unsupervised(isolationforest) and supervised learning"""
     log.info(f"Starting batch inference for file: {filepath}")
 
-    # Load data
+    # Load data 
     df_orig = run_eda(filepath)
     log.info(f"Loaded batch data with shape: {df_orig.shape}")
 
@@ -53,27 +81,46 @@ def run_batch_inference(filepath: str):
     df = feature_engineer(df_orig.copy())
 
     # Load preprocessor
-    preprocessor = load_model(preprocessor_path)
-    hash_encode = transform_with_preprocessor(df)
+    preprocessor = joblib.load('artifacts/preprocessor.joblib')
+    hash_encode = get_hash_encoder(df)
 
     x_hashed = hash_encode.transform(df)
-    X = preprocessor.transform(df)
+    X = preprocessor.transform(x_hashed)
     log.info("Feature transformation complete")
 
-    # Unsupervised (Isolation Forest)
-    iso_model = load_model(iso_forest_path)
+    # ======================
+    # Load production models
+    #=======================
+
+    iso_model = load_production_model(iso_forest_name)
+    log.info('IsolationForest Model successfully loaded')
+
+    try:
+        rf_model = load_production_model(rf_model_name)
+        model_type = 'RandomForest'
+    except Exception:
+        log.warning('Random Forest Model not found in production! Using XGBoost Model instead')
+        rf_model = load_production_model(xgb_model_name)
+        model_type = 'XGBoost'
+    log.info(f'Using {model_type} model for fraud probability predictions')
+
+    # =========================================
+    # Unsupervised inference (Isolation Forest)
+    # =========================================
+
     df['AnomalyScore'] = iso_model.decision_function(X)
     df['is_anomaly'] = iso_model.predict(X)
     df['is_anomaly'] = df['is_anomaly'].apply(lambda x: 1 if x == -1 else 0)
     log.info(f"IsolationForest anomalies detected: {df['is_anomaly'].sum()}")
 
-    # Semi-supervised (RandomForest)
-    hashed_df = preprocessor.transform(x_hashed)
-    rf_model = load_model(rf_model_path)
-    df['fraud_probability'] = rf_model.predict_proba(hashed_df)[:, 1]
+    # =========================================
+    # Semi-supervised (RandomForest or xgboost)
+    # =========================================
+
+    df['fraud_probability'] = rf_model.predict_proba(X)[:, 1]
     df['fraud_prediction'] = (df['fraud_probability'] >= 0.2).astype(int)
 
-    # Combine
+#     # Hybrid Decision Logic
     df['final_predictions'] = np.where(
         (df['is_anomaly'] == 1) & (df['fraud_prediction'] == 1), 1, 0
     )
@@ -81,7 +128,7 @@ def run_batch_inference(filepath: str):
     anomaly_count = df['final_predictions'].sum()
     log.info(f"Final fraud detected: {anomaly_count}/{len(df)}")
 
-    # Save
+    # Save predictions
     output_file = f"data/predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     df.to_csv(output_file, index=False)
     log.info(f"Predictions saved to {output_file}")
