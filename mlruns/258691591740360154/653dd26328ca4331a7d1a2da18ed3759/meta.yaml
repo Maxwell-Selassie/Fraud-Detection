@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/258691591740360154/653dd26328ca4331a7d1a2da18ed3759/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '258691591740360154'
+lifecycle_stage: active
+run_id: 653dd26328ca4331a7d1a2da18ed3759
+run_name: IsolationForest_Baseline
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760711263595
+status: 1
+tags: []
+user_id: Maxwe
