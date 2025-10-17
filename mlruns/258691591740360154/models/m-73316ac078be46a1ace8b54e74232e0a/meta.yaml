@@ -1,0 +1,10 @@
+artifact_location: mlflow-artifacts:/258691591740360154/models/m-73316ac078be46a1ace8b54e74232e0a/artifacts
+creation_timestamp: 1760711267534
+experiment_id: '258691591740360154'
+last_updated_timestamp: 1760711351190
+model_id: m-73316ac078be46a1ace8b54e74232e0a
+model_type: ''
+name: IsolationForestModel
+source_run_id: 653dd26328ca4331a7d1a2da18ed3759
+status: 2
+status_message: null

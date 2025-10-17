@@ -72,7 +72,8 @@ def run_batch_inference(filepath: str, threshold: float = 0.2):
     log.info(f"Starting batch inference for file: {filepath}")
 
     # Load data 
-    df_orig = run_eda(filepath)
+    df_original = run_eda(filepath)
+    df_orig = df_original['data']
     log.info(f"Loaded batch data with shape: {df_orig.shape}")
 
 
@@ -84,8 +85,8 @@ def run_batch_inference(filepath: str, threshold: float = 0.2):
     preprocessor = joblib.load('artifacts/preprocessor.joblib')
     hash_encode = get_hash_encoder(df)
 
-    x_hashed = hash_encode.transform(df)
-    X = preprocessor.transform(x_hashed)
+    x_hashed = hash_encode.fit_transformtransform(df)
+    X = preprocessor.fit_transform(x_hashed)
     log.info("Feature transformation complete")
 
     # ======================
