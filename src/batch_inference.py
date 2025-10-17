@@ -85,7 +85,7 @@ def run_batch_inference(filepath: str, threshold: float = 0.2):
     preprocessor = joblib.load('artifacts/preprocessor.joblib')
     hash_encode = get_hash_encoder(df)
 
-    x_hashed = hash_encode.fit_transformtransform(df)
+    x_hashed = hash_encode.fit_transform(df)
     X = preprocessor.fit_transform(x_hashed)
     log.info("Feature transformation complete")
 
